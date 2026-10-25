@@ -379,6 +379,32 @@ body.locked { overflow: hidden; }
 .view, .card, .grid > * { min-width: 0; }
 .table-scroll { max-width: 100%; }
 
+/* ---------- 侧栏分组（对齐客户截图：运营/供应链/财务/系统与数据） ---------- */
+.nav-title {
+  font-size: 11px; color: #5f6c82; letter-spacing: .08em;
+  padding: 14px 10px 4px; position: relative;
+}
+.nav-title::after {
+  content: ""; position: absolute; left: 10px; right: 10px; bottom: 0;
+  height: 1px; background: rgba(255, 255, 255, .05);
+}
+.nav-item.sub { padding-left: 22px; font-size: 13px; color: #a9b6ca; }
+.nav-item.sub::before {
+  content: ""; width: 4px; height: 4px; border-radius: 50%;
+  background: currentColor; opacity: .45; margin-right: 8px;
+}
+.nav-item.sub.active::before { opacity: 1; background: #60a5fa; }
+.nav-badge {
+  margin-left: auto; background: #f04438; color: #fff;
+  font-size: 10.5px; line-height: 16px; padding: 0 6px; border-radius: 999px;
+}
+@media (max-width: 860px) {
+  .nav-title { display: none; }
+  .nav-item.sub { padding-left: 11px; color: #c7d2e4; font-size: 13px; }
+  .nav-item.sub::before { display: none; }
+  .nav-badge { margin-left: 6px; }
+}
+
 </style>
 <script>
 /**
@@ -416,21 +442,28 @@ body.locked { overflow: hidden; }
     </div>
 
     <nav class="nav" id="nav">
-      <a class="nav-item" href="#/overview" data-route="overview"><span class="nav-ico">◎</span>经营总览</a>
-      <div class="nav-group">四大板块</div>
-      <a class="nav-item" href="#/cash" data-route="cash"><span class="nav-ico">¥</span>资金流动</a>
-      <a class="nav-item" href="#/goods" data-route="goods"><span class="nav-ico">▦</span>货物流动</a>
-      <a class="nav-item" href="#/sales" data-route="sales"><span class="nav-ico">↗</span>销售数据</a>
-      <a class="nav-item" href="#/product" data-route="product"><span class="nav-ico">✦</span>产品开发</a>
-      <div class="nav-group">系统</div>
-      <a class="nav-item" href="#/master" data-route="master"><span class="nav-ico">▤</span>基础档案</a>
-      <a class="nav-item" href="#/import" data-route="import"><span class="nav-ico">⇪</span>数据导入</a>
-      <a class="nav-item" href="#/account" data-route="account"><span class="nav-ico">☺</span>账号与日志</a>
+      <a class="nav-item" href="#/overview" data-route="overview"><span class="nav-ico">⌂</span>首页总览</a>
+      <a class="nav-item" href="#/todo" data-route="todo"><span class="nav-ico">☑</span>待办中心<span class="nav-badge">4</span></a>
+
+      <div class="nav-title">运营中心</div>
+      <a class="nav-item sub" href="#/sales" data-route="sales">销售数据</a>
+      <a class="nav-item sub" href="#/product" data-route="product">产品开发</a>
+
+      <div class="nav-title">供应链中心</div>
+      <a class="nav-item sub" href="#/goods" data-route="goods">货物流动</a>
+
+      <div class="nav-title">财务中心</div>
+      <a class="nav-item sub" href="#/cash" data-route="cash">资金流动</a>
+
+      <div class="nav-title">系统与数据</div>
+      <a class="nav-item sub" href="#/master" data-route="master">基础档案</a>
+      <a class="nav-item sub" href="#/import" data-route="import">数据导入</a>
+      <a class="nav-item sub" href="#/account" data-route="account">账号与日志</a>
     </nav>
 
     <div class="sidebar-foot">
       <div class="demo-tag">演示原型 · 数据为虚构样例</div>
-      <div class="ver">v0.3 · 2026-10-25 09:26</div>
+      <div class="ver">v0.4 · 2026-10-25 09:44</div>
     </div>
   </aside>
 
@@ -563,10 +596,10 @@ window.DEMO = {
   ],
 
   todos: [
-    { level: "高", text: "SKU-1003 库存为 0，US-B 仍在售，建议暂停广告", time: "08:12" },
-    { level: "中", text: "10-24 费用分摊未完成（头程 ¥15,800 未分摊到 SKU）", time: "昨天" },
-    { level: "中", text: "PO-20261018 尾款 ¥16,500 将于 10-28 到期", time: "昨天" },
-    { level: "低", text: "销售明细导入 10-24 有 3 行失败（SKU 未匹配）", time: "10-24" }
+    { level: "高", module: "货物流动", text: "SKU-1003 库存为 0，US-B 仍在售", suggest: "暂停广告并补货", time: "10-25 08:12", status: "待处理" },
+    { level: "中", module: "财务中心", text: "10-24 头程 ¥15,800 未分摊到 SKU", suggest: "补分摊，否则毛利失真", time: "10-24 18:20", status: "待处理" },
+    { level: "中", module: "财务中心", text: "PO-20261018 尾款 ¥16,500 于 10-28 到期", suggest: "安排付款", time: "10-24 09:05", status: "待处理" },
+    { level: "低", module: "系统与数据", text: "销售明细导入 10-24 有 3 行失败（SKU 未匹配）", suggest: "补齐 SKU 档案后重导", time: "10-24 21:02", status: "待处理" }
   ],
 
   imports: [
@@ -645,6 +678,7 @@ window.DEMO = {
     period: "2026-10-01 ~ 2026-10-25",
     compare: true,
     masterTab: "stores",
+    todoFilter: "全部",
     impStep: 1,
     impType: "销售明细"
   };
@@ -660,7 +694,8 @@ window.DEMO = {
   };
 
   const titles = {
-    overview: ["经营总览", "钱去哪了、货在哪、卖得怎么样，一屏看完"],
+    overview: ["首页总览", "钱去哪了、货在哪、卖得怎么样，一屏看完"],
+    todo: ["待办中心", "异常、待付款、未分摊，按优先级处理"],
     cash: ["资金流动", "账户余额、收支流水、费用分摊与应付账款"],
     goods: ["货物流动", "采购 → 头程 → 在途 → 海外仓库存，一本账"],
     sales: ["销售数据", "销量、售价、退款与 SKU 毛利"],
@@ -790,6 +825,40 @@ window.DEMO = {
   const searchBox = (ph) => `<input class="search" data-filter placeholder="${ph}" />`;
 
   /* ---------------- 视图 ---------------- */
+  function todoPage() {
+    const filter = state.todoFilter || "全部";
+    const levels = ["全部", "高", "中", "低"];
+    const counts = { "高": 0, "中": 0, "低": 0 };
+    D.todos.forEach(t => { counts[t.level] = (counts[t.level] || 0) + 1; });
+    const list = D.todos.map((t, i) => ({ t, i })).filter(({ t }) => filter === "全部" || t.level === filter);
+    const rows = list.map(({ t, i }) => `<tr data-row>
+      <td>${badge(t.level, t.level === "高" ? "red" : t.level === "中" ? "amber" : "gray")}</td>
+      <td class="name">${esc(t.text)}</td>
+      <td>${esc(t.module)}</td>
+      <td class="muted">${esc(t.suggest)}</td>
+      <td class="muted">${t.time}</td>
+      <td>${t.status === "已处理" ? badge("已处理", "green") : badge("待处理", "amber")}</td>
+      <td class="num"><button class="link" data-act="todo-done" data-key="${i}">处理</button>
+      <button class="link danger" data-act="todo-done" data-key="${i}">忽略</button></td></tr>`).join("");
+
+    return `
+      <div class="grid g4">
+        <div class="card kpi"><div class="label">待处理</div><div class="value">${D.todos.filter(t => t.status !== "已处理").length}</div><div class="foot"><span>全部来源：导入 / 库存 / 应付</span></div></div>
+        <div class="card kpi"><div class="label">高优先级</div><div class="value neg">${counts["高"]}</div><div class="foot"><span>缺货、负库存、对账不平</span></div></div>
+        <div class="card kpi"><div class="label">中优先级</div><div class="value">${counts["中"]}</div><div class="foot"><span>未分摊、应付款到期</span></div></div>
+        <div class="card kpi"><div class="label">低优先级</div><div class="value">${counts["低"]}</div><div class="foot"><span>导入失败行</span></div></div>
+      </div>
+      <div class="card">
+        ${cardHead("待办列表", `${list.length} 条`)}
+        <div class="toolbar"><div class="tabs">${levels.map(l => `<button class="tab ${filter === l ? "active" : ""}" data-act="todo-filter" data-level="${l}">${l}${l === "全部" ? ` <span class="cnt">${D.todos.length}</span>` : ` <span class="cnt">${counts[l] || 0}</span>`}</button>`).join("")}</div>
+          <div class="right">${searchBox("搜索内容 / 模块")}</div></div>
+        <table class="table"><thead><tr><th>级别</th><th>内容</th><th>关联模块</th><th>建议动作</th><th>时间</th><th>状态</th><th class="num">操作</th></tr></thead>
+        <tbody>${rows || emptyRow(7, "没有待办")}</tbody></table>
+        <div class="hr"></div>
+        <div class="note">待办由规则自动生成：库存为负或为 0 且在售、费用未分摊、应付到期前 7 天、导入失败行。不使用消息推送，进系统即可看到。</div>
+      </div>`;
+  }
+
   function overview() {
     const f = factor();
     const todos = D.todos.map(t => {
@@ -1240,7 +1309,7 @@ window.DEMO = {
   }
 
   /* ---------------- 路由 ---------------- */
-  const views = { overview, cash, goods, sales, product, import: importer, master, account };
+  const views = { overview, todo: todoPage, cash, goods, sales, product, import: importer, master, account };
 
   function render() {
     const route = (location.hash.replace(/^#\//, "") || "overview").split("?")[0];
@@ -1283,6 +1352,14 @@ window.DEMO = {
       const act = el.dataset.act;
       if (act === "close") { closeForm(); return; }
       if (act === "tab") { state.masterTab = el.dataset.tab; render(); return; }
+      if (act === "todo-filter") { state.todoFilter = el.dataset.level; render(); return; }
+      if (act === "todo-done") {
+        const i = Number(el.dataset.key);
+        D.todos[i].status = "已处理";
+        toast("已标记处理");
+        render();
+        return;
+      }
       if (act === "edit") { openForm(el.dataset.entity, el.dataset.key === undefined ? null : Number(el.dataset.key)); return; }
       if (act === "del") {
         const entity = el.dataset.entity, idx = Number(el.dataset.key);
