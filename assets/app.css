@@ -431,3 +431,98 @@ tbody tr.warn-row:hover td { background: #fff6e6; }
 .page-tabs { display: inline-flex; background: #e9eef6; padding: 3px; border-radius: 10px; align-self: flex-start; }
 .page-tabs .tab { padding: 7px 16px; font-size: 13px; }
 .page-tabs .tab.active { background: #fff; box-shadow: 0 1px 2px rgba(15,23,42,.1); }
+
+/* ================= v0.9 新增组件 ================= */
+.g5 { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+@media (max-width: 1400px) { .g5 { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 1180px) { .g5 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 860px) { .g5 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 420px) { .g5 { grid-template-columns: 1fr; } }
+
+.range-note { font-size: 11.5px; color: var(--muted); white-space: nowrap; }
+.filter.range { display: none; }
+.filter.range.show { display: flex; }
+.filter.range input {
+  border: 0; outline: 0; background: transparent; color: var(--ink);
+  font-size: 12px; width: 108px;
+}
+.filter .tilde { color: #b6c0ce; font-size: 11px; }
+
+.kpi.has-tip { cursor: help; }
+.tip-ico {
+  width: 13px; height: 13px; border-radius: 50%; background: #eef1f6; color: #94a3b8;
+  font-size: 9px; display: inline-grid; place-items: center; font-weight: 700;
+}
+.hovercard {
+  position: fixed; z-index: 90; display: none; max-width: 300px;
+  background: #111c2e; color: #fff; font-size: 12px; line-height: 1.6;
+  padding: 8px 11px; border-radius: 9px; white-space: pre-line;
+  box-shadow: 0 12px 30px rgba(15, 23, 42, .28); pointer-events: none;
+}
+.hovercard::after {
+  content: ""; position: absolute; left: 14px; bottom: -4px;
+  width: 8px; height: 8px; background: #111c2e; transform: rotate(45deg);
+}
+
+.btn.sm { padding: 4px 9px; font-size: 12px; }
+.btn.warn { color: #b45309; border-color: #f2d2a4; background: #fff8ee; }
+.link.warn { color: #b45309; }
+.nowrap { white-space: nowrap; }
+.brand-txt { color: var(--brand); }
+
+.hint-row { margin-top: 6px; color: #9aa5b5; font-size: 11.5px; text-align: right; }
+.pager {
+  display: flex; align-items: center; gap: 8px; justify-content: flex-end;
+  padding-top: 12px; font-size: 12px;
+}
+.pager .muted { margin-right: auto; }
+.pager .btn:disabled { opacity: .45; cursor: default; }
+
+/* 库存水位 */
+.water { min-width: 118px; }
+.water-top { display: flex; justify-content: space-between; gap: 8px; font-size: 12px; }
+.water-top b { font-variant-numeric: tabular-nums; }
+.water-top span { color: var(--muted); font-size: 11px; }
+.water-bar { height: 6px; border-radius: 999px; background: #eef1f6; overflow: hidden; margin-top: 4px; }
+.water-bar i { display: block; height: 100%; border-radius: 999px; }
+.water.ok .water-bar i { background: #34b27b; }
+.water.warn .water-bar i { background: #e0a63a; }
+.water.bad .water-bar i { background: #e05454; }
+.water.ok .water-top b { color: #0f9d63; }
+.water.bad .water-top b { color: #d33b3b; }
+
+/* 产品开发：四段流程条 */
+.steps-flow { display: flex; align-items: center; gap: 4px; }
+.steps-flow .sf { flex: 1; display: flex; flex-direction: column; gap: 3px; }
+.steps-flow .sf i {
+  display: block; height: 7px; border-radius: 3px; background: #e7ebf2;
+}
+.steps-flow .sf.done i { background: #2f6fe0; }
+.steps-flow .sf.now i { background: #1d4ed8; box-shadow: 0 0 0 2px #e3edfe; }
+.steps-flow .sf em {
+  font-style: normal; font-size: 10.5px; color: #9aa5b5; text-align: center;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.steps-flow .sf.done em { color: #334155; }
+.steps-flow .sf.now em { color: #1d4ed8; font-weight: 600; }
+
+/* 列设置 */
+.col-menu { position: relative; }
+.col-menu > summary { list-style: none; cursor: pointer; }
+.col-menu > summary::-webkit-details-marker { display: none; }
+.col-menu .menu {
+  position: absolute; right: 0; top: 34px; z-index: 30; width: 190px;
+  background: #fff; border: 1px solid var(--line); border-radius: 10px;
+  box-shadow: 0 12px 30px rgba(15, 23, 42, .12); padding: 8px;
+}
+.col-menu .menu label {
+  display: flex; align-items: center; gap: 8px; font-size: 12.5px;
+  padding: 6px 8px; border-radius: 7px; cursor: pointer; color: var(--ink-2);
+}
+.col-menu .menu label:hover { background: #f5f8fd; }
+.col-menu .menu input { accent-color: var(--brand); }
+
+/* 宽表：宁可横向滚动，也不让单元格挤成多行 */
+.table.wide { min-width: 1300px; }
+.table.wide th, .table.wide td { white-space: nowrap; }
+.table.wide td .muted { white-space: nowrap; }

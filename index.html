@@ -5,8 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>AMZ 数据台 · 交互原型</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%232563eb'/%3E%3Ctext x='32' y='44' font-size='34' font-family='-apple-system,sans-serif' font-weight='700' fill='white' text-anchor='middle'%3EA%3C/text%3E%3C/svg%3E" />
-<link rel="stylesheet" href="./assets/app.css?v=8" />
-<script src="./assets/vendor/chart.umd.min.js?v=8"></script>
+<link rel="stylesheet" href="./assets/app.css?v=9" />
+<script src="./assets/vendor/chart.umd.min.js?v=9"></script>
 </head>
 <body>
 <div class="app">
@@ -25,6 +25,7 @@
 
       <div class="nav-title">运营中心</div>
       <a class="nav-item sub" href="#/sales" data-route="sales">销售数据</a>
+      <a class="nav-item sub" href="#/ads" data-route="ads">广告运营</a>
       <a class="nav-item sub" href="#/product" data-route="product">产品开发</a>
 
       <div class="nav-title">供应链中心</div>
@@ -42,7 +43,7 @@
 
     <div class="sidebar-foot">
       <div class="demo-tag">演示原型 · 数据为虚构样例</div>
-      <div class="ver">v0.8 · 2026-10-25 11:56</div>
+      <div class="ver">v0.9 · 2026-10-26</div>
     </div>
   </aside>
 
@@ -55,29 +56,22 @@
       <div class="filters">
         <label class="filter">
           <span>期间</span>
-          <select id="fPeriod">
-            <option>2026-10-01 ~ 2026-10-25</option>
-            <option>2026-10-01 ~ 2026-10-31</option>
-            <option>2026-09-01 ~ 2026-09-30</option>
-          </select>
+          <select id="fPeriod"></select>
+        </label>
+        <label class="filter range" id="customRange">
+          <input type="date" id="fFrom" />
+          <span class="tilde">~</span>
+          <input type="date" id="fTo" />
         </label>
         <label class="filter">
           <span>店铺</span>
-          <select id="fStore">
-            <option>全部店铺</option>
-            <option>US-A</option>
-            <option>US-B</option>
-            <option>DE-A</option>
-          </select>
+          <select id="fStore"></select>
         </label>
         <label class="filter">
           <span>站点</span>
-          <select id="fSite">
-            <option>全部站点</option>
-            <option>美国</option>
-            <option>德国</option>
-          </select>
+          <select id="fSite"></select>
         </label>
+        <span class="range-note" id="rangeNote"></span>
         <button class="btn ghost" id="btnCompare">对比上期：开</button>
       </div>
       <div class="user">
@@ -89,11 +83,11 @@
     <section class="view" id="view"></section>
 
     <footer class="foot">
-      本页面为需求确认用交互原型，所有数字均为虚构演示数据；实际上线版本按导入日期出数，不做实时同步。
+      本页面为需求确认用交互原型，所有数字均为虚构演示数据；期间筛选只影响汇总与明细展示，不改变已入库数据。
     </footer>
   </main>
 </div>
-<script src="./assets/data.js?v=8"></script>
-<script src="./assets/app.js?v=8"></script>
+<script src="./assets/data.js?v=9"></script>
+<script src="./assets/app.js?v=9"></script>
 </body>
 </html>

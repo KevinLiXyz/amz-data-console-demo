@@ -1,186 +1,290 @@
 // 演示数据（全部为虚构样例，不含任何真实客户数据）
-window.DEMO = {
-  meta: { period: "2026-10-01 ~ 2026-10-25", store: "全部店铺", site: "全部站点" },
+(function () {
+  const FX = { USD: 7.12, CAD: 5.22, BRL: 1.31, MXN: 0.39, EUR: 7.78, GBP: 9.15 };
 
-  kpi: [
-    { key: "sales", label: "销售业绩", value: 131540, delta: -1.5, unit: "¥", hint: "较上期" },
-    { key: "profit", label: "预估毛利", value: -21456, delta: -3.2, unit: "¥", hint: "毛利率 -16.3%" },
-    { key: "refund", label: "退款额", value: -11342, delta: 0.8, unit: "¥", hint: "退款率 8.6%" },
-    { key: "payable", label: "应付账款", value: 10000, delta: 2.4, unit: "¥", hint: "3 笔待付，最近到期 10-28" }
-  ],
+  const sites = [
+    { name: "美国", currency: "USD", status: "启用" },
+    { name: "加拿大", currency: "CAD", status: "启用" },
+    { name: "巴西", currency: "BRL", status: "启用" },
+    { name: "墨西哥", currency: "MXN", status: "启用" },
+    { name: "德国", currency: "EUR", status: "启用" },
+    { name: "英国", currency: "GBP", status: "启用" }
+  ];
 
-  trend: {
-    labels: ["10-01", "10-04", "10-07", "10-10", "10-13", "10-16", "10-19", "10-22", "10-25"],
-    sales: [8200, 9100, 7800, 12400, 13800, 11900, 16800, 18200, 21040],
-    profit: [-1200, -800, -2100, 1400, 2600, 900, 3800, 4100, 5200]
-  },
+  const stores = [
+    { name: "深圳市星野科技有限公司", site: "美国", status: "启用", updated: "2026-10-25" },
+    { name: "星野贸易（香港）有限公司", site: "美国", status: "启用", updated: "2026-10-25" },
+    { name: "Nordwind GmbH", site: "德国", status: "启用", updated: "2026-10-24" },
+    { name: "星野（上海）电子商务有限公司", site: "加拿大", status: "停用", updated: "2026-09-30" }
+  ];
 
-  cashflow: {
-    labels: ["10-01", "10-05", "10-09", "10-13", "10-17", "10-21", "10-25"],
-    income: [62000, 18000, 0, 42000, 26000, 0, 38000],
-    expense: [12000, 46000, 9000, 0, 21000, 33000, 15000]
-  },
+  // 一条记录 = 店铺(公司) × 站点(销售国) × SKU 的唯一身份
+  const skus = [
+    { sku: "SKU-1001", name: "折叠收纳箱 60L", store: "深圳市星野科技有限公司", site: "美国", asin: "B0B8X1Q2M3", price: 35.99, baseQty: 4, cost: 92, delivery: 38, freight: 6, storage: 2 },
+    { sku: "SKU-1002", name: "厨房沥水架", store: "深圳市星野科技有限公司", site: "美国", asin: "B0B7K4L9P1", price: 19.99, baseQty: 3, cost: 48, delivery: 26, freight: 3, storage: 1 },
+    { sku: "SKU-1003", name: "宠物自动喂食器", store: "星野贸易（香港）有限公司", site: "美国", asin: "B0C2M8T6R4", price: 89.99, baseQty: 1, cost: 235, delivery: 82, freight: 12, storage: 4 },
+    { sku: "SKU-1004", name: "车载吸尘器", store: "Nordwind GmbH", site: "德国", asin: "B0D5N3V7S2", price: 69.99, baseQty: 1, cost: 205, delivery: 75, freight: 14, storage: 4 },
+    { sku: "SKU-1005", name: "硅胶烘焙垫 3 件套", store: "星野贸易（香港）有限公司", site: "美国", asin: "B0B9P2D4W8", price: 12.99, baseQty: 12, cost: 26, delivery: 14, freight: 2, storage: 0.5 },
+    { sku: "SKU-1006", name: "露营折叠桌", store: "Nordwind GmbH", site: "德国", asin: "B0F1Q7H5K9", price: 45.99, baseQty: 2, cost: 128, delivery: 52, freight: 9, storage: 2 }
+  ];
 
-  transit: [
-    { lane: "深圳 → 洛杉矶", qty: 1280, eta: "2026-11-02", status: "海运在途" },
-    { lane: "宁波 → 汉堡", qty: 640, eta: "2026-11-11", status: "海运在途" },
-    { lane: "广州 → 纽约", qty: 320, eta: "2026-10-28", status: "清关中" },
-    { lane: "义乌 → 洛杉矶", qty: 180, eta: "2026-10-26", status: "派送中" }
-  ],
+  // ---------- 广告活动（SP 商品推广 / SB 品牌推广 / SD 展示推广） ----------
+  const campaigns = [
+    { id: "SP-01", type: "SP", name: "收纳箱-精准长尾", sku: "SKU-1001", store: "深圳市星野科技有限公司", site: "美国", spend: 140, sales: 700, imp: 24000, clicks: 470, orders: 9 },
+    { id: "SP-02", type: "SP", name: "沥水架-广泛匹配", sku: "SKU-1002", store: "深圳市星野科技有限公司", site: "美国", spend: 92, sales: 375, imp: 16400, clicks: 312, orders: 6 },
+    { id: "SP-03", type: "SP", name: "喂食器-自动投放", sku: "SKU-1003", store: "星野贸易（香港）有限公司", site: "美国", spend: 118, sales: 500, imp: 12100, clicks: 264, orders: 3 },
+    { id: "SB-01", type: "SB", name: "星野品牌旗舰", sku: "SKU-1001", store: "深圳市星野科技有限公司", site: "美国", spend: 86, sales: 310, imp: 18800, clicks: 205, orders: 4 },
+    { id: "SD-01", type: "SD", name: "收纳箱-再营销", sku: "SKU-1001", store: "星野贸易（香港）有限公司", site: "美国", spend: 58, sales: 178, imp: 9600, clicks: 148, orders: 2 },
+    { id: "SD-02", type: "SD", name: "吸尘器-商品定向", sku: "SKU-1004", store: "Nordwind GmbH", site: "德国", spend: 66, sales: 215, imp: 7400, clicks: 121, orders: 1 }
+  ];
 
-  stock: [
-    { sku: "SKU-1001", name: "折叠收纳箱 60L", store: "US-A", warehouse: "LA 海外仓", qty: 820, age: "32 天", cost: 42.5, value: 34850, status: "正常" },
-    { sku: "SKU-1002", name: "厨房沥水架", store: "US-A", warehouse: "LA 海外仓", qty: 64, age: "86 天", cost: 28.0, value: 1792, status: "库龄偏长" },
-    { sku: "SKU-1003", name: "宠物自动喂食器", store: "US-B", warehouse: "NJ 海外仓", qty: 0, age: "—", cost: 96.0, value: 0, status: "缺货" },
-    { sku: "SKU-1004", name: "车载吸尘器", store: "DE-A", warehouse: "汉堡海外仓", qty: 210, age: "12 天", cost: 118.0, value: 24780, status: "正常" },
-    { sku: "SKU-1005", name: "硅胶烘焙垫 3 件套", store: "US-B", warehouse: "NJ 海外仓", qty: 1530, age: "45 天", cost: 12.4, value: 18972, status: "正常" }
-  ],
+  // 确定性伪随机，保证每次打开数字一致
+  let seed = 20261025;
+  const rnd = () => { seed = (seed * 1103515245 + 12345) % 2147483648; return seed / 2147483648; };
 
-  sales: [
-    { sku: "SKU-1001", name: "折叠收纳箱 60L", store: "US-A", qty: 412, amount: 41200, refund: 2400, cost: 17510, freight: 1648, storage: 412, commission: 6180, ad: 3200, profit: 9850, margin: 23.9 },
-    { sku: "SKU-1002", name: "厨房沥水架", store: "US-A", qty: 168, amount: 10080, refund: 920, cost: 4704, freight: 336, storage: 168, commission: 1512, ad: 1200, profit: 1240, margin: 12.3 },
-    { sku: "SKU-1003", name: "宠物自动喂食器", store: "US-B", qty: 96, amount: 24000, refund: 3600, cost: 9216, freight: 960, storage: 240, commission: 3600, ad: 2800, profit: 3584, margin: 14.9 },
-    { sku: "SKU-1004", name: "车载吸尘器", store: "DE-A", qty: 61, amount: 12810, refund: 640, cost: 7198, freight: 610, storage: 122, commission: 1922, ad: 900, profit: 1418, margin: 11.1 },
-    { sku: "SKU-1005", name: "硅胶烘焙垫 3 件套", store: "US-B", qty: 530, amount: 15900, refund: 780, cost: 6572, freight: 636, storage: 159, commission: 2385, ad: 1450, profit: 3918, margin: 24.6 }
-  ],
-
-  finance: [
-    { date: "2026-10-24", type: "支出", account: "招行对公", category: "头程运费", counterparty: "海派物流", amount: -15800, note: "10 月第 3 批海运" },
-    { date: "2026-10-23", type: "收入", account: "PingPong", category: "店铺回款", counterparty: "Amazon US-A", amount: 38200, note: "10-09~10-15 结算" },
-    { date: "2026-10-22", type: "支出", account: "招行对公", category: "采购货款", counterparty: "宁波恒美", amount: -33000, note: "PO-20261018 预付 50%" },
-    { date: "2026-10-21", type: "支出", account: "Payoneer", category: "仓储费", counterparty: "LA 海外仓", amount: -4200, note: "9 月仓储+操作费" },
-    { date: "2026-10-19", type: "收入", account: "PingPong", category: "店铺回款", counterparty: "Amazon DE-A", amount: 26400, note: "10-02~10-08 结算" },
-    { date: "2026-10-17", type: "支出", account: "招行对公", category: "广告费", counterparty: "Amazon Ads", amount: -9600, note: "10 月上半月" }
-  ],
-
-  accounts: [
-    { name: "招行对公", balance: 186400, currency: "CNY" },
-    { name: "PingPong", balance: 64200, currency: "USD 折算" },
-    { name: "Payoneer", balance: 23800, currency: "USD 折算" }
-  ],
-
-  payables: [
-    { no: "PO-20261018", supplier: "宁波恒美", amount: 33000, paid: 16500, due: "2026-10-28" },
-    { no: "PO-20261021", supplier: "深圳优品", amount: 12400, paid: 0, due: "2026-11-03" },
-    { no: "PO-20261023", supplier: "海派物流", amount: 8800, paid: 0, due: "2026-11-08" }
-  ],
-
-  projects: [
-    { code: "PD-2026-08", name: "宠物自动喂食器 2 代", stage: "打样", owner: "阿凯", cost: 18600, target: "2026-12-05", progress: 45 },
-    { code: "PD-2026-09", name: "可折叠露营收纳箱", stage: "开模", owner: "小周", cost: 42300, target: "2026-11-20", progress: 62 },
-    { code: "PD-2026-10", name: "车载吸尘器 Pro", stage: "选品评估", owner: "阿凯", cost: 3200, target: "2027-01-15", progress: 15 },
-    { code: "PD-2026-07", name: "硅胶烘焙垫 4 件套", stage: "已上市", owner: "小周", cost: 25800, target: "2026-09-30", progress: 100 }
-  ],
-
-  suppliers: [
-    { name: "宁波恒美", category: "塑料家居", samples: 6, pass: 4, rating: "A" },
-    { name: "深圳优品", category: "小家电", samples: 4, pass: 2, rating: "B" },
-    { name: "东莞禾木", category: "硅胶制品", samples: 8, pass: 7, rating: "A" }
-  ],
-
-  todos: [
-    { level: "高", module: "货物流动", text: "SKU-1003 库存为 0，US-B 仍在售", suggest: "暂停广告并补货", time: "10-25 08:12", status: "待处理" },
-    { level: "中", module: "财务中心", text: "10-24 头程 ¥15,800 未分摊到 SKU", suggest: "补分摊，否则毛利失真", time: "10-24 18:20", status: "待处理" },
-    { level: "中", module: "财务中心", text: "PO-20261018 尾款 ¥16,500 于 10-28 到期", suggest: "安排付款", time: "10-24 09:05", status: "待处理" },
-    { level: "低", module: "系统与数据", text: "销售明细导入 10-24 有 3 行失败（SKU 未匹配）", suggest: "补齐 SKU 档案后重导", time: "10-24 21:02", status: "待处理" }
-  ],
-
-  imports: [
-    { time: "2026-10-24 21:02", type: "销售明细", file: "sales_20261024.xlsx", rows: 320, ok: 317, fail: 3, by: "财务-小林" },
-    { time: "2026-10-24 20:40", type: "库存流水", file: "stock_20261024.xlsx", rows: 85, ok: 85, fail: 0, by: "运营-阿凯" },
-    { time: "2026-10-23 18:11", type: "资金流水", file: "cash_20261023.xlsx", rows: 42, ok: 42, fail: 0, by: "财务-小林" },
-    { time: "2026-10-22 09:30", type: "采购入库", file: "po_20261022.xlsx", rows: 12, ok: 10, fail: 2, by: "运营-小周" }
-  ],
-
-  users: [
-    { name: "老板", account: "boss", last: "2026-10-25 08:05", status: "启用" },
-    { name: "阿凯", account: "kai", last: "2026-10-25 07:52", status: "启用" },
-    { name: "小林", account: "lin", last: "2026-10-24 21:10", status: "启用" },
-    { name: "小周", account: "zhou", last: "2026-10-23 17:40", status: "启用" },
-    { name: "离职-老陈", account: "chen", last: "2026-09-30 18:22", status: "停用" }
-  ],
-
-  logs: [
-    { time: "2026-10-25 07:52", user: "kai", module: "货物流", action: "编辑", detail: "SKU-1003 库存 12 → 0" },
-    { time: "2026-10-24 21:02", user: "lin", module: "销售数据", action: "导入", detail: "sales_20261024.xlsx（3 行失败）" },
-    { time: "2026-10-24 20:40", user: "kai", module: "货物流", action: "导入", detail: "stock_20261024.xlsx" },
-    { time: "2026-10-24 09:12", user: "boss", module: "账号", action: "停用", detail: "用户 chen" }
-  ],
-
-
-  purchaseStages: ["采购申请", "审批", "下单", "供应商发货", "头程运输", "清关", "到仓", "入库上架", "出库发货"],
-
-  purchases: [
-    { no: "PO-20261018", type: "外采", batch: "B20261018-01", shipTo: "Amazon US-A（FBA）", supplier: "宁波恒美", sku: "SKU-1001", name: "折叠收纳箱 60L", qty: 2000, amount: 66000, paid: 33000, stage: 6, eta: "2026-10-27", owner: "小周",
-      timeline: [
-        { stage: "采购申请", time: "2026-10-14 09:20", by: "小周", note: "库存低于安全线，补 2,000 件" },
-        { stage: "审批", time: "2026-10-14 15:05", by: "老板", note: "同意，按 33 元/件" },
-        { stage: "下单", time: "2026-10-15 10:12", by: "小周", note: "合同 PO-20261018 已签" },
-        { stage: "供应商发货", time: "2026-10-20 16:40", by: "宁波恒美", note: "工厂出库 2,000 件" },
-        { stage: "头程运输", time: "2026-10-21 08:30", by: "海派物流", note: "宁波 → 洛杉矶，海运" },
-        { stage: "清关", time: "2026-10-24 14:20", by: "海派物流", note: "清关资料已提交" },
-        { stage: "到仓", time: "2026-10-25 09:10", by: "LA 海外仓", note: "到仓 1,280 件，剩余分批发" }
-      ] },
-    { no: "PO-20261021", type: "代加工", batch: "B20261021-01", shipTo: "Amazon US-B（FBA）", supplier: "深圳优品", sku: "SKU-1003", name: "宠物自动喂食器", qty: 800, amount: 76800, paid: 0, stage: 3, eta: "2026-11-06", owner: "阿凯",
-      timeline: [
-        { stage: "采购申请", time: "2026-10-16 11:00", by: "阿凯", note: "新款备货，首批 800 件" },
-        { stage: "审批", time: "2026-10-16 18:30", by: "老板", note: "同意，先付 50%" },
-        { stage: "下单", time: "2026-10-17 09:45", by: "阿凯", note: "已下单，账期 30 天" },
-        { stage: "付款", time: "2026-10-24 09:05", by: "小林", note: "尾款 16,500 待付，10-28 到期" }
-      ] },
-    { no: "PO-20261023", type: "外采", batch: "B20261023-01", shipTo: "Amazon US-B（FBA）", supplier: "东莞禾木", sku: "SKU-1005", name: "硅胶烘焙垫 3 件套", qty: 3000, amount: 37200, paid: 37200, stage: 4, eta: "2026-11-12", owner: "小周",
-      timeline: [
-        { stage: "采购申请", time: "2026-10-20 10:15", by: "小周", note: "旺季补货 3,000 件" },
-        { stage: "审批", time: "2026-10-20 14:00", by: "老板", note: "同意" },
-        { stage: "下单", time: "2026-10-21 09:30", by: "小周", note: "全款已付" },
-        { stage: "供应商发货", time: "2026-10-23 17:20", by: "东莞禾木", note: "工厂直发深圳仓" },
-        { stage: "头程运输", time: "2026-10-19 08:00", by: "海派物流", note: "深圳 → 新泽西，海运（已开船 6 天）" }
-      ] },
-    { no: "PO-20261012", type: "外采", batch: "B20261012-01", shipTo: "Amazon US-A（FBA）", supplier: "宁波恒美", sku: "SKU-1006", name: "露营收纳箱 80L", qty: 1200, amount: 51000, paid: 51000, stage: 8, eta: "2026-10-20", owner: "小周",
-      timeline: [
-        { stage: "采购申请", time: "2026-10-08 09:00", by: "小周", note: "新品首批" },
-        { stage: "审批", time: "2026-10-08 11:20", by: "老板", note: "同意" },
-        { stage: "下单", time: "2026-10-09 10:00", by: "小周", note: "已下单" },
-        { stage: "付款", time: "2026-10-09 15:00", by: "小林", note: "全款" },
-        { stage: "供应商发货", time: "2026-10-11 16:00", by: "宁波恒美", note: "出库" },
-        { stage: "头程运输", time: "2026-10-12 08:00", by: "海派物流", note: "宁波 → 洛杉矶" },
-        { stage: "清关", time: "2026-10-16 10:30", by: "海派物流", note: "放行" },
-        { stage: "到仓", time: "2026-10-18 14:00", by: "LA 海外仓", note: "到仓 1,200 件" },
-        { stage: "入库上架", time: "2026-10-19 10:20", by: "阿凯", note: "已上架，库存已更新" },
-        { stage: "出库发货", time: "2026-10-21 09:40", by: "小周", note: "发 FBA 1,200 件，批次 B20261012-01 已发走" }
-      ] }
-  ],
-
-  masters: {
-    stores: [
-      { code: "US-A", name: "美国店 A", site: "美国", status: "启用" },
-      { code: "US-B", name: "美国店 B", site: "美国", status: "启用" },
-      { code: "DE-A", name: "德国店 A", site: "德国", status: "启用" },
-      { code: "UK-A", name: "英国店 A", site: "英国", status: "停用" }
-    ],
-    skus: [
-      { sku: "SKU-1001", name: "折叠收纳箱 60L", category: "家居收纳", cost: 42.5, status: "在售" },
-      { sku: "SKU-1002", name: "厨房沥水架", category: "厨房用品", cost: 28.0, status: "在售" },
-      { sku: "SKU-1003", name: "宠物自动喂食器", category: "宠物用品", cost: 96.0, status: "在售" },
-      { sku: "SKU-1004", name: "车载吸尘器", category: "汽车用品", cost: 118.0, status: "在售" },
-      { sku: "SKU-1005", name: "硅胶烘焙垫 3 件套", category: "厨房用品", cost: 12.4, status: "在售" },
-      { sku: "SKU-1006", name: "露营收纳箱 80L", category: "家居收纳", cost: 55.0, status: "停售" }
-    ],
-    warehouses: [
-      { name: "LA 海外仓", type: "海外仓", location: "美国 洛杉矶", status: "启用" },
-      { name: "NJ 海外仓", type: "海外仓", location: "美国 新泽西", status: "启用" },
-      { name: "汉堡海外仓", type: "海外仓", location: "德国 汉堡", status: "启用" },
-      { name: "海派物流", type: "货代", location: "深圳", status: "启用" },
-      { name: "宁波恒美仓", type: "国内仓", location: "宁波", status: "启用" }
-    ],
-    subjects: [
-      { code: "C-01", name: "采购货款", type: "支出", status: "启用" },
-      { code: "C-02", name: "头程运费", type: "支出", status: "启用" },
-      { code: "C-03", name: "仓储费", type: "支出", status: "启用" },
-      { code: "C-04", name: "广告费", type: "支出", status: "启用" },
-      { code: "C-05", name: "平台佣金", type: "支出", status: "启用" },
-      { code: "C-06", name: "店铺回款", type: "收入", status: "启用" },
-      { code: "C-07", name: "其他收入", type: "收入", status: "启用" }
-    ]
+  const DAY = 86400000;
+  const fmt = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  const dates = [];
+  for (let t = Date.UTC(2026, 8, 1); t <= Date.UTC(2026, 9, 25); t += DAY) {
+    const d = new Date(t);
+    dates.push(fmt(new Date(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate())));
   }
-};
+
+  const weekdayFactor = [0.92, 0.95, 1.0, 1.02, 1.05, 1.18, 1.24]; // 周日..周六
+  const growth = (i) => 0.86 + i / dates.length * 0.28; // 9 月略低，10 月爬坡
+
+  // ---------- 广告日数据 ----------
+  const ads = [];
+  dates.forEach((date, di) => {
+    const wd = new Date(date + "T00:00:00").getDay();
+    campaigns.forEach((c) => {
+      const jitter = 0.82 + rnd() * 0.36;
+      const f = weekdayFactor[wd] * growth(di) * jitter;
+      const spend = Math.round(c.spend * f * 100) / 100;
+      const sales = Math.round(c.sales * f * 100) / 100;
+      const clicks = Math.round(c.clicks * f);
+      const imp = Math.round(c.imp * f);
+      ads.push({
+        date, type: c.type, campaign: c.name, campaignId: c.id,
+        store: c.store, site: c.site, sku: c.sku,
+        impressions: imp, clicks, spend, sales,
+        orders: Math.max(1, Math.round(c.orders * f))
+      });
+    });
+  });
+
+  const adBySkuDate = {};
+  ads.forEach((a) => {
+    const k = a.sku + "|" + a.date;
+    adBySkuDate[k] = (adBySkuDate[k] || 0) + a.spend;
+  });
+
+  // ---------- 销售明细（按天 × 店铺 × 站点 × SKU） ----------
+  const sales = [];
+  dates.forEach((date, di) => {
+    const wd = new Date(date + "T00:00:00").getDay();
+    skus.forEach((s) => {
+      const jitter = 0.72 + rnd() * 0.56;
+      const qty = Math.max(0, Math.round(s.baseQty * weekdayFactor[wd] * growth(di) * jitter));
+      if (!qty) return;
+      const cny = FX[s.site === "德国" ? "EUR" : "USD"];
+      const px = s.price * (0.96 + rnd() * 0.08);
+      const amountLocal = Math.round(qty * px * 100) / 100;
+      const amount = amountLocal * cny;
+      const refund = amount * (0.025 + rnd() * 0.03);
+      const commission = amount * 0.15;
+      const ad = adBySkuDate[s.sku + "|" + date] || 0;
+      const profit = amount - refund - s.cost * qty - s.freight * qty - s.storage * qty - commission - s.delivery * qty - ad;
+      sales.push({
+        date, store: s.store, site: s.site, sku: s.sku, name: s.name, asin: s.asin,
+        currency: s.site === "德国" ? "EUR" : "USD",
+        qty, amountLocal, amount, refund, commission, ad, profit,
+        margin: amount ? +(profit / amount * 100).toFixed(1) : 0
+      });
+    });
+  });
+
+  // ---------- FBA 库存（不做海外仓） ----------
+  const stock = [
+    { sku: "SKU-1001", name: "折叠收纳箱 60L", store: "深圳市星野科技有限公司", site: "美国", asin: "B0B8X1Q2M3", fba: 820, domestic: 600, inbound: 480, age90: 0, sales30: 512, eta: "2026-11-02", status: "正常" },
+    { sku: "SKU-1002", name: "厨房沥水架", store: "深圳市星野科技有限公司", site: "美国", asin: "B0B7K4L9P1", fba: 64, domestic: 0, inbound: 0, age90: 64, sales30: 196, eta: "—", status: "断货风险" },
+    { sku: "SKU-1003", name: "宠物自动喂食器", store: "星野贸易（香港）有限公司", site: "美国", asin: "B0C2M8T6R4", fba: 0, domestic: 300, inbound: 300, age90: 0, sales30: 96, eta: "2026-11-11", status: "已断货" },
+    { sku: "SKU-1004", name: "车载吸尘器", store: "Nordwind GmbH", site: "德国", asin: "B0D5N3V7S2", fba: 210, domestic: 0, inbound: 120, age90: 0, sales30: 61, eta: "2026-10-28", status: "偏紧" },
+    { sku: "SKU-1005", name: "硅胶烘焙垫 3 件套", store: "星野贸易（香港）有限公司", site: "美国", asin: "B0B9P2D4W8", fba: 1530, domestic: 0, inbound: 0, age90: 0, sales30: 530, eta: "—", status: "健康" },
+    { sku: "SKU-1006", name: "露营折叠桌", store: "Nordwind GmbH", site: "德国", asin: "B0F1Q7H5K9", fba: 340, domestic: 200, inbound: 0, age90: 12, sales30: 88, eta: "2026-11-06", status: "偏紧" }
+  ];
+
+  // ---------- SKU 利润表（成本项每天可能变，录入时留更新日期） ----------
+  const skuProfit = skus.map((s) => {
+    const cny = FX[s.site === "德国" ? "EUR" : "USD"];
+    const price = +(s.price * cny).toFixed(2);
+    const commission = +(price * 0.15).toFixed(2);
+    const ad = +(price * 0.10).toFixed(2);
+    const profit = +(price - s.cost - s.freight - s.storage - commission - s.delivery - ad).toFixed(2);
+    return {
+      sku: s.sku, name: s.name, store: s.store, site: s.site,
+      price, cost: s.cost, freight: s.freight, storage: s.storage,
+      commission, delivery: s.delivery, ad, profit,
+      margin: +(profit / price * 100).toFixed(1),
+      updated: s.sku === "SKU-1002" ? "2026-10-24" : "2026-10-25"
+    };
+  });
+
+  const purchases = [
+    {
+      no: "PO-20261018", type: "外采", batch: "B20261018-01", supplier: "宁波恒美", store: "深圳市星野科技有限公司", site: "美国",
+      sku: "SKU-1001", name: "折叠收纳箱 60L", qty: 800, amount: 6600, paid: 3300, eta: "2026-10-26", shipTo: "FBA · US-A", owner: "小周", stage: 5,
+      timeline: [
+        { stage: "采购申请", time: "2026-10-18 09:20", by: "小周", note: "补货 800 件" },
+        { stage: "审批", time: "2026-10-18 11:05", by: "老板", note: "同意" },
+        { stage: "下单", time: "2026-10-18 15:40", by: "小周", note: "预付 50%" },
+        { stage: "供应商发货", time: "2026-10-20 10:00", by: "宁波恒美", note: "已出库" },
+        { stage: "头程运输", time: "2026-10-21 08:30", by: "海派物流", note: "宁波 → 洛杉矶" },
+        { stage: "清关", time: "2026-10-24 14:10", by: "海派物流", note: "清关中" }
+      ]
+    },
+    {
+      no: "PO-20261021", type: "外采", batch: "B20261021-01", supplier: "深圳优品", store: "星野贸易（香港）有限公司", site: "美国",
+      sku: "SKU-1003", name: "宠物自动喂食器", qty: 300, amount: 12400, paid: 0, eta: "2026-11-03", shipTo: "FBA · US-B", owner: "阿凯", stage: 2,
+      timeline: [
+        { stage: "采购申请", time: "2026-10-21 09:10", by: "阿凯", note: "断货补货" },
+        { stage: "审批", time: "2026-10-21 10:30", by: "老板", note: "同意" },
+        { stage: "下单", time: "2026-10-21 16:20", by: "阿凯", note: "待付定金" }
+      ]
+    },
+    {
+      no: "PO-20261023", type: "代加工", batch: "B20261023-01", supplier: "东莞禾木", store: "深圳市星野科技有限公司", site: "美国",
+      sku: "SKU-1002", name: "厨房沥水架", qty: 1000, amount: 22800, paid: 6840, eta: "2026-11-12", shipTo: "FBA · US-A", owner: "小周", stage: 3,
+      timeline: [
+        { stage: "采购申请", time: "2026-10-23 09:00", by: "小周", note: "代加工订单" },
+        { stage: "审批", time: "2026-10-23 09:40", by: "老板", note: "同意" },
+        { stage: "下单", time: "2026-10-23 14:00", by: "小周", note: "按进度付款 30%" },
+        { stage: "供应商发货", time: "2026-10-25 10:20", by: "东莞禾木", note: "首批 400 件" }
+      ]
+    },
+    {
+      no: "PO-20261014", type: "外采", batch: "B20261014-01", supplier: "宁波恒美", store: "Nordwind GmbH", site: "德国",
+      sku: "SKU-1006", name: "露营折叠桌", qty: 500, amount: 26000, paid: 26000, eta: "2026-10-20", shipTo: "FBA · DE-A", owner: "阿凯", stage: 8,
+      timeline: [
+        { stage: "采购申请", time: "2026-10-14 09:00", by: "阿凯", note: "德国站补货" },
+        { stage: "审批", time: "2026-10-14 10:10", by: "老板", note: "同意" },
+        { stage: "下单", time: "2026-10-14 11:30", by: "阿凯", note: "全款" },
+        { stage: "供应商发货", time: "2026-10-15 09:00", by: "宁波恒美", note: "已出库" },
+        { stage: "头程运输", time: "2026-10-15 15:00", by: "海派物流", note: "宁波 → 汉堡" },
+        { stage: "清关", time: "2026-10-18 10:00", by: "海派物流", note: "已清关" },
+        { stage: "到仓", time: "2026-10-19 09:00", by: "Nordwind", note: "到仓" },
+        { stage: "入库上架", time: "2026-10-19 16:00", by: "Nordwind", note: "已上架" },
+        { stage: "出库发货", time: "2026-10-20 10:00", by: "Nordwind", note: "已发 FBA" }
+      ]
+    },
+    {
+      no: "PO-20261025", type: "外采", batch: "B20261025-01", supplier: "深圳优品", store: "星野贸易（香港）有限公司", site: "美国",
+      sku: "SKU-1005", name: "硅胶烘焙垫 3 件套", qty: 2000, amount: 31000, paid: 0, eta: "2026-11-20", shipTo: "FBA · US-B", owner: "小周", stage: 1,
+      timeline: [
+        { stage: "采购申请", time: "2026-10-25 08:50", by: "小周", note: "旺季备货" },
+        { stage: "审批", time: "2026-10-25 09:30", by: "老板", note: "同意，等付款" }
+      ]
+    }
+  ];
+
+  const projects = [
+    { code: "PD-2026-08", name: "宠物自动喂食器 2 代", stage: "打样", step: 1, owner: "阿凯", cost: 18600, target: "2026-12-05" },
+    { code: "PD-2026-09", name: "可折叠露营收纳箱", stage: "量产", step: 2, owner: "小周", cost: 42300, target: "2026-11-20" },
+    { code: "PD-2026-10", name: "车载吸尘器 Pro", stage: "选品评估", step: 0, owner: "阿凯", cost: 3200, target: "2027-01-15" },
+    { code: "PD-2026-07", name: "硅胶烘焙垫 4 件套", stage: "上市", step: 3, owner: "小周", cost: 25800, target: "2026-09-30" }
+  ];
+
+  const suppliers = [
+    { name: "宁波恒美", category: "塑料家居", contact: "王工 138****2210", rating: "A", status: "启用" },
+    { name: "深圳优品", category: "小家电", contact: "李经理 139****8821", rating: "B", status: "启用" },
+    { name: "东莞禾木", category: "硅胶制品", contact: "陈小姐 137****6633", rating: "A", status: "启用" },
+    { name: "义乌新程", category: "户外用品", contact: "赵工 135****9012", rating: "B", status: "启用" }
+  ];
+
+  window.DEMO = {
+    meta: { period: "2026-10-01 ~ 2026-10-25", store: "全部店铺", site: "全部站点" },
+    fx: FX,
+    sites,
+    stores,
+    skus,
+    campaigns,
+    ads,
+    sales,
+    stock,
+    skuProfit,
+    purchases,
+    purchaseStages: ["采购申请", "审批", "下单", "供应商发货", "头程运输", "清关", "到仓", "入库上架", "出库发货"],
+    projects,
+    projectStages: ["选品评估", "打样", "量产", "上市"],
+    suppliers,
+
+    trendDays: dates,
+
+    todos: [
+      { level: "高", text: "宠物自动喂食器 FBA 可售库存为 0（US-B）", module: "库存", suggest: "空运 300 件或调拨", time: "10-25 08:10", status: "待处理" },
+      { level: "高", text: "SKU-1002 可售天数 9 天，低于安全线", module: "库存", suggest: "发起采购 / 提报补货", time: "10-25 08:10", status: "待处理" },
+      { level: "中", text: "PO-20261021 已过付款节点，未付定金", module: "采购", suggest: "确认付款或改期", time: "10-24 17:20", status: "待处理" },
+      { level: "中", text: "SD-02 广告 ACOS 41%，高于目标 25%", module: "广告", suggest: "降竞价 / 关低效词", time: "10-24 09:05", status: "待处理" },
+      { level: "低", text: "10-24 销售导入 3 行失败（ASIN 缺失）", module: "导入", suggest: "补 ASIN 后重导", time: "10-24 08:40", status: "已处理" }
+    ],
+
+    transit: [
+      { lane: "深圳 → 洛杉矶", qty: 1280, eta: "2026-11-02", status: "海运在途" },
+      { lane: "宁波 → 汉堡", qty: 640, eta: "2026-11-11", status: "海运在途" },
+      { lane: "广州 → 纽约", qty: 320, eta: "2026-10-28", status: "清关中" },
+      { lane: "义乌 → 洛杉矶", qty: 180, eta: "2026-10-26", status: "派送中" }
+    ],
+
+    cashflow: {
+      labels: ["09-01", "09-08", "09-15", "09-22", "09-29", "10-06", "10-13", "10-20", "10-25"],
+      income: [62000, 58000, 74000, 69000, 81000, 72000, 66000, 88000, 76000],
+      expense: [52000, 61000, 58000, 72000, 64000, 69000, 58000, 74000, 66000]
+    },
+
+    finance: (function () {
+      const out = [];
+      dates.forEach((date, i) => {
+        const wd = new Date(date + "T00:00:00").getDay();
+        if (wd === 5) out.push({ date, type: "收入", account: "PingPong", category: "店铺回款", counterparty: "Amazon US", amount: Math.round(28000 + rnd() * 18000), note: "本周店铺结算" });
+        if (wd === 1) out.push({ date, type: "支出", account: "招行对公", category: "采购货款", counterparty: "宁波恒美", amount: -Math.round(18000 + rnd() * 16000), note: "采购合同付款" });
+        if (wd === 3) out.push({ date, type: "支出", account: "招行对公", category: "头程运费", counterparty: "海派物流", amount: -Math.round(8000 + rnd() * 6000), note: "海运头程" });
+        if (wd === 2) out.push({ date, type: "支出", account: "招行对公", category: "广告费", counterparty: "Amazon Ads", amount: -Math.round(6000 + rnd() * 3000), note: "广告账户充值" });
+        if (i % 9 === 0) out.push({ date, type: "支出", account: "Payoneer", category: "FBA 仓储费", counterparty: "Amazon FBA", amount: -Math.round(2800 + rnd() * 1800), note: "FBA 仓储与操作费" });
+      });
+      return out.reverse();
+    })(),
+
+    accounts: [
+      { name: "招行对公", balance: 186400, currency: "CNY" },
+      { name: "PingPong", balance: 64200, currency: "USD 折算" },
+      { name: "Payoneer", balance: 23800, currency: "USD 折算" }
+    ],
+
+    payables: [
+      { no: "PO-20261018", supplier: "宁波恒美", amount: 33000, paid: 16500, due: "2026-10-28" },
+      { no: "PO-20261021", supplier: "深圳优品", amount: 12400, paid: 0, due: "2026-11-03" },
+      { no: "PO-20261025", supplier: "深圳优品", amount: 31000, paid: 0, due: "2026-11-08" }
+    ],
+
+    users: [
+      { name: "老板", account: "admin", last: "2026-10-25 11:40", status: "启用" },
+      { name: "小周", account: "zhou", last: "2026-10-25 10:12", status: "启用" },
+      { name: "阿凯", account: "kai", last: "2026-10-24 18:30", status: "启用" },
+      { name: "财务小李", account: "li", last: "2026-10-25 09:05", status: "启用" },
+      { name: "离职账号", account: "temp01", last: "2026-08-02 14:00", status: "停用" }
+    ],
+
+    logs: [
+      { time: "2026-10-25 11:38", user: "老板", module: "广告运营", action: "新增", detail: "SP-01 10-24 广告数据" },
+      { time: "2026-10-25 10:12", user: "小周", module: "销售数据", action: "新增", detail: "10-24 销售明细 6 条" },
+      { time: "2026-10-25 09:05", user: "财务小李", module: "资金流水", action: "新增", detail: "头程运费 ¥15,800" },
+      { time: "2026-10-24 18:30", user: "阿凯", module: "采购管理", action: "推进", detail: "PO-20261023 → 供应商发货" }
+    ],
+
+    imports: [
+      { time: "2026-10-25 10:12", type: "销售明细", file: "销售明细-20261024.xlsx", rows: 6, ok: 6, fail: 0, by: "小周" },
+      { time: "2026-10-25 11:38", type: "广告数据", file: "广告-SP-20261024.xlsx", rows: 6, ok: 6, fail: 0, by: "老板" },
+      { time: "2026-10-24 08:40", type: "销售明细", file: "销售明细-20261023.xlsx", rows: 9, ok: 6, fail: 3, by: "阿凯" }
+    ]
+  };
+})();
