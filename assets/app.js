@@ -617,6 +617,14 @@
     const route = (location.hash.replace(/^#\//, "") || "overview").split("?")[0];
     state.route = views[route] ? route : "overview";
     document.getElementById("view").innerHTML = views[state.route]();
+    document.querySelectorAll("#view table").forEach(t => {
+      if (!t.parentElement.classList.contains("table-scroll")) {
+        const w = document.createElement("div");
+        w.className = "table-scroll";
+        t.parentElement.insertBefore(w, t);
+        w.appendChild(t);
+      }
+    });
     const t = titles[state.route];
     document.getElementById("pageTitle").textContent = t[0];
     document.getElementById("pageDesc").textContent = t[1];

@@ -316,3 +316,57 @@ body.locked { overflow: hidden; }
   .choice-grid { grid-template-columns: 1fr; }
   .drawer { width: 100%; }
 }
+
+/* ---------- 移动端可用性（原型评审常发生在手机上） ---------- */
+.table-scroll { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.table-scroll table { min-width: 720px; }
+
+@media (max-width: 860px) {
+  .app { display: block; }
+  .sidebar {
+    display: flex; position: sticky; top: 0; z-index: 50;
+    width: 100%; height: auto; flex: none;
+    padding: 8px 10px 10px;
+  }
+  .brand { padding: 2px 4px 8px; }
+  .brand-sub { display: none; }
+  .nav { flex-direction: row; overflow-x: auto; gap: 6px; padding-bottom: 2px; }
+  .nav::-webkit-scrollbar { display: none; }
+  .nav-group { display: none; }
+  .nav-item {
+    white-space: nowrap; padding: 7px 11px; font-size: 13px;
+    background: rgba(255, 255, 255, .06); border-radius: 999px;
+  }
+  .nav-item.active { background: #1b2b4a; box-shadow: none; }
+  .sidebar-foot { display: none; }
+
+  .topbar { position: static; padding: 10px 12px; gap: 10px; }
+  .page-title h1 { font-size: 16px; }
+  .page-title p { font-size: 12px; }
+  .filters { width: 100%; gap: 6px; }
+  .filter { flex: 1 1 auto; padding: 4px 8px; }
+  .filter select { width: 100%; }
+  .user { display: none; }
+
+  .view { padding: 12px 12px 4px; gap: 12px; }
+  .card { padding: 12px 12px 10px; border-radius: 12px; }
+  .card-head { flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+  .card-head .right { margin-left: 0; width: 100%; }
+  .card-head .right .search { width: 100%; }
+  .g4 { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .kpi .value { font-size: 19px; }
+  .kpi .foot { font-size: 11px; }
+  .chart-wrap { height: 190px; }
+  .chart-wrap.sm { height: 170px; }
+  .foot { margin: 0 12px; font-size: 11px; }
+  .search { width: 100%; }
+  .toolbar { gap: 6px; }
+}
+
+@media (max-width: 420px) {
+  .g4 { grid-template-columns: 1fr; }
+}
+
+/* flex 子项默认 min-width:auto 会被宽表格撑开，导致整页横向溢出 */
+.view, .card, .grid > * { min-width: 0; }
+.table-scroll { max-width: 100%; }

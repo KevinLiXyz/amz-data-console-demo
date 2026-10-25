@@ -44,5 +44,6 @@ Pages 开启：仓库 Settings → Pages → Source 选 `main` / `root`。
 ## 技术
 
 - 原生 HTML/CSS/JS，无框架
+- 原型可手机查看（导航改为顶部胶囊、表格内部横向滚动），但**交付范围仍只做桌面**，手机仅用于评审
 - Chart.js 4（本地打包，无外网依赖）
 - hash 路由，刷新不 404
