@@ -16,6 +16,7 @@
     period: "2026-10-01 ~ 2026-10-25",
     compare: true,
     masterTab: "stores",
+    todoFilter: "全部",
     impStep: 1,
     impType: "销售明细"
   };
@@ -31,7 +32,8 @@
   };
 
   const titles = {
-    overview: ["经营总览", "钱去哪了、货在哪、卖得怎么样，一屏看完"],
+    overview: ["首页总览", "钱去哪了、货在哪、卖得怎么样，一屏看完"],
+    todo: ["待办中心", "异常、待付款、未分摊，按优先级处理"],
     cash: ["资金流动", "账户余额、收支流水、费用分摊与应付账款"],
     goods: ["货物流动", "采购 → 头程 → 在途 → 海外仓库存，一本账"],
     sales: ["销售数据", "销量、售价、退款与 SKU 毛利"],
@@ -161,6 +163,40 @@
   const searchBox = (ph) => `<input class="search" data-filter placeholder="${ph}" />`;
 
   /* ---------------- 视图 ---------------- */
+  function todoPage() {
+    const filter = state.todoFilter || "全部";
+    const levels = ["全部", "高", "中", "低"];
+    const counts = { "高": 0, "中": 0, "低": 0 };
+    D.todos.forEach(t => { counts[t.level] = (counts[t.level] || 0) + 1; });
+    const list = D.todos.map((t, i) => ({ t, i })).filter(({ t }) => filter === "全部" || t.level === filter);
+    const rows = list.map(({ t, i }) => `<tr data-row>
+      <td>${badge(t.level, t.level === "高" ? "red" : t.level === "中" ? "amber" : "gray")}</td>
+      <td class="name">${esc(t.text)}</td>
+      <td>${esc(t.module)}</td>
+      <td class="muted">${esc(t.suggest)}</td>
+      <td class="muted">${t.time}</td>
+      <td>${t.status === "已处理" ? badge("已处理", "green") : badge("待处理", "amber")}</td>
+      <td class="num"><button class="link" data-act="todo-done" data-key="${i}">处理</button>
+      <button class="link danger" data-act="todo-done" data-key="${i}">忽略</button></td></tr>`).join("");
+
+    return `
+      <div class="grid g4">
+        <div class="card kpi"><div class="label">待处理</div><div class="value">${D.todos.filter(t => t.status !== "已处理").length}</div><div class="foot"><span>全部来源：导入 / 库存 / 应付</span></div></div>
+        <div class="card kpi"><div class="label">高优先级</div><div class="value neg">${counts["高"]}</div><div class="foot"><span>缺货、负库存、对账不平</span></div></div>
+        <div class="card kpi"><div class="label">中优先级</div><div class="value">${counts["中"]}</div><div class="foot"><span>未分摊、应付款到期</span></div></div>
+        <div class="card kpi"><div class="label">低优先级</div><div class="value">${counts["低"]}</div><div class="foot"><span>导入失败行</span></div></div>
+      </div>
+      <div class="card">
+        ${cardHead("待办列表", `${list.length} 条`)}
+        <div class="toolbar"><div class="tabs">${levels.map(l => `<button class="tab ${filter === l ? "active" : ""}" data-act="todo-filter" data-level="${l}">${l}${l === "全部" ? ` <span class="cnt">${D.todos.length}</span>` : ` <span class="cnt">${counts[l] || 0}</span>`}</button>`).join("")}</div>
+          <div class="right">${searchBox("搜索内容 / 模块")}</div></div>
+        <table class="table"><thead><tr><th>级别</th><th>内容</th><th>关联模块</th><th>建议动作</th><th>时间</th><th>状态</th><th class="num">操作</th></tr></thead>
+        <tbody>${rows || emptyRow(7, "没有待办")}</tbody></table>
+        <div class="hr"></div>
+        <div class="note">待办由规则自动生成：库存为负或为 0 且在售、费用未分摊、应付到期前 7 天、导入失败行。不使用消息推送，进系统即可看到。</div>
+      </div>`;
+  }
+
   function overview() {
     const f = factor();
     const todos = D.todos.map(t => {
@@ -611,7 +647,7 @@
   }
 
   /* ---------------- 路由 ---------------- */
-  const views = { overview, cash, goods, sales, product, import: importer, master, account };
+  const views = { overview, todo: todoPage, cash, goods, sales, product, import: importer, master, account };
 
   function render() {
     const route = (location.hash.replace(/^#\//, "") || "overview").split("?")[0];
@@ -654,6 +690,14 @@
       const act = el.dataset.act;
       if (act === "close") { closeForm(); return; }
       if (act === "tab") { state.masterTab = el.dataset.tab; render(); return; }
+      if (act === "todo-filter") { state.todoFilter = el.dataset.level; render(); return; }
+      if (act === "todo-done") {
+        const i = Number(el.dataset.key);
+        D.todos[i].status = "已处理";
+        toast("已标记处理");
+        render();
+        return;
+      }
       if (act === "edit") { openForm(el.dataset.entity, el.dataset.key === undefined ? null : Number(el.dataset.key)); return; }
       if (act === "del") {
         const entity = el.dataset.entity, idx = Number(el.dataset.key);
