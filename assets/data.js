@@ -134,7 +134,7 @@ window.DEMO = {
         { stage: "审批", time: "2026-10-20 14:00", by: "老板", note: "同意" },
         { stage: "下单", time: "2026-10-21 09:30", by: "小周", note: "全款已付" },
         { stage: "供应商发货", time: "2026-10-23 17:20", by: "东莞禾木", note: "工厂直发深圳仓" },
-        { stage: "头程运输", time: "2026-10-24 08:00", by: "海派物流", note: "深圳 → 新泽西，海运" }
+        { stage: "头程运输", time: "2026-10-19 08:00", by: "海派物流", note: "深圳 → 新泽西，海运（已开船 6 天）" }
       ] },
     { no: "PO-20261012", type: "外采", batch: "B20261012-01", shipTo: "Amazon US-A（FBA）", supplier: "宁波恒美", sku: "SKU-1006", name: "露营收纳箱 80L", qty: 1200, amount: 51000, paid: 51000, stage: 8, eta: "2026-10-20", owner: "小周",
       timeline: [
