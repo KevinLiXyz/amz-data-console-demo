@@ -370,3 +370,29 @@ body.locked { overflow: hidden; }
 /* flex 子项默认 min-width:auto 会被宽表格撑开，导致整页横向溢出 */
 .view, .card, .grid > * { min-width: 0; }
 .table-scroll { max-width: 100%; }
+
+/* ---------- 侧栏分组（对齐客户截图：运营/供应链/财务/系统与数据） ---------- */
+.nav-title {
+  font-size: 11px; color: #5f6c82; letter-spacing: .08em;
+  padding: 14px 10px 4px; position: relative;
+}
+.nav-title::after {
+  content: ""; position: absolute; left: 10px; right: 10px; bottom: 0;
+  height: 1px; background: rgba(255, 255, 255, .05);
+}
+.nav-item.sub { padding-left: 22px; font-size: 13px; color: #a9b6ca; }
+.nav-item.sub::before {
+  content: ""; width: 4px; height: 4px; border-radius: 50%;
+  background: currentColor; opacity: .45; margin-right: 8px;
+}
+.nav-item.sub.active::before { opacity: 1; background: #60a5fa; }
+.nav-badge {
+  margin-left: auto; background: #f04438; color: #fff;
+  font-size: 10.5px; line-height: 16px; padding: 0 6px; border-radius: 999px;
+}
+@media (max-width: 860px) {
+  .nav-title { display: none; }
+  .nav-item.sub { padding-left: 11px; color: #c7d2e4; font-size: 13px; }
+  .nav-item.sub::before { display: none; }
+  .nav-badge { margin-left: 6px; }
+}
