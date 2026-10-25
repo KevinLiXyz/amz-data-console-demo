@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>AMZ 数据台 · 交互原型</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%232563eb'/%3E%3Ctext x='32' y='44' font-size='34' font-family='-apple-system,sans-serif' font-weight='700' fill='white' text-anchor='middle'%3EA%3C/text%3E%3C/svg%3E" />
+<link rel="stylesheet" href="./assets/app.css" />
+<script src="./assets/vendor/chart.umd.min.js"></script>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">A</div>
+      <div>
+        <div class="brand-name">AMZ 数据台</div>
+        <div class="brand-sub">内部数据管理后台</div>
+      </div>
+    </div>
+
+    <nav class="nav" id="nav">
+      <a class="nav-item" href="#/overview" data-route="overview"><span class="nav-ico">◎</span>经营总览</a>
+      <div class="nav-group">四大板块</div>
+      <a class="nav-item" href="#/cash" data-route="cash"><span class="nav-ico">¥</span>资金流动</a>
+      <a class="nav-item" href="#/goods" data-route="goods"><span class="nav-ico">▦</span>货物流动</a>
+      <a class="nav-item" href="#/sales" data-route="sales"><span class="nav-ico">↗</span>销售数据</a>
+      <a class="nav-item" href="#/product" data-route="product"><span class="nav-ico">✦</span>产品开发</a>
+      <div class="nav-group">系统</div>
+      <a class="nav-item" href="#/import" data-route="import"><span class="nav-ico">⇪</span>数据导入</a>
+      <a class="nav-item" href="#/account" data-route="account"><span class="nav-ico">☺</span>账号与日志</a>
+    </nav>
+
+    <div class="sidebar-foot">
+      <div class="demo-tag">演示原型 · 数据为虚构样例</div>
+      <div class="ver">v0.1 · 2026-10-25</div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <div class="page-title">
+        <h1 id="pageTitle">经营总览</h1>
+        <p id="pageDesc">钱去哪了、货在哪、卖得怎么样，一屏看完</p>
+      </div>
+      <div class="filters">
+        <label class="filter">
+          <span>期间</span>
+          <select id="fPeriod">
+            <option>2026-10-01 ~ 2026-10-25</option>
+            <option>2026-10-01 ~ 2026-10-31</option>
+            <option>2026-09-01 ~ 2026-09-30</option>
+          </select>
+        </label>
+        <label class="filter">
+          <span>店铺</span>
+          <select id="fStore">
+            <option>全部店铺</option>
+            <option>US-A</option>
+            <option>US-B</option>
+            <option>DE-A</option>
+          </select>
+        </label>
+        <label class="filter">
+          <span>站点</span>
+          <select id="fSite">
+            <option>全部站点</option>
+            <option>美国</option>
+            <option>德国</option>
+          </select>
+        </label>
+        <button class="btn ghost" id="btnCompare">对比上期：开</button>
+      </div>
+      <div class="user">
+        <div class="avatar">老</div>
+        <div class="user-meta"><b>老板</b><span>管理员账号</span></div>
+      </div>
+    </header>
+
+    <section class="view" id="view"></section>
+
+    <footer class="foot">
+      本页面为需求确认用交互原型，所有数字均为虚构演示数据；实际上线版本按导入日期出数，不做实时同步。
+    </footer>
+  </main>
+</div>
+<script src="./assets/data.js"></script>
+<script src="./assets/app.js"></script>
+</body>
+</html>
