@@ -108,10 +108,10 @@ window.DEMO = {
   ],
 
 
-  purchaseStages: ["采购申请", "审批", "下单", "供应商发货", "头程运输", "清关", "到仓", "入库上架"],
+  purchaseStages: ["采购申请", "审批", "下单", "供应商发货", "头程运输", "清关", "到仓", "入库上架", "出库发货"],
 
   purchases: [
-    { no: "PO-20261018", supplier: "宁波恒美", sku: "SKU-1001", name: "折叠收纳箱 60L", qty: 2000, amount: 66000, paid: 33000, stage: 6, eta: "2026-10-27", owner: "小周",
+    { no: "PO-20261018", type: "外采", batch: "B20261018-01", shipTo: "Amazon US-A（FBA）", supplier: "宁波恒美", sku: "SKU-1001", name: "折叠收纳箱 60L", qty: 2000, amount: 66000, paid: 33000, stage: 6, eta: "2026-10-27", owner: "小周",
       timeline: [
         { stage: "采购申请", time: "2026-10-14 09:20", by: "小周", note: "库存低于安全线，补 2,000 件" },
         { stage: "审批", time: "2026-10-14 15:05", by: "老板", note: "同意，按 33 元/件" },
@@ -121,14 +121,14 @@ window.DEMO = {
         { stage: "清关", time: "2026-10-24 14:20", by: "海派物流", note: "清关资料已提交" },
         { stage: "到仓", time: "2026-10-25 09:10", by: "LA 海外仓", note: "到仓 1,280 件，剩余分批发" }
       ] },
-    { no: "PO-20261021", supplier: "深圳优品", sku: "SKU-1003", name: "宠物自动喂食器", qty: 800, amount: 76800, paid: 0, stage: 3, eta: "2026-11-06", owner: "阿凯",
+    { no: "PO-20261021", type: "代加工", batch: "B20261021-01", shipTo: "Amazon US-B（FBA）", supplier: "深圳优品", sku: "SKU-1003", name: "宠物自动喂食器", qty: 800, amount: 76800, paid: 0, stage: 3, eta: "2026-11-06", owner: "阿凯",
       timeline: [
         { stage: "采购申请", time: "2026-10-16 11:00", by: "阿凯", note: "新款备货，首批 800 件" },
         { stage: "审批", time: "2026-10-16 18:30", by: "老板", note: "同意，先付 50%" },
         { stage: "下单", time: "2026-10-17 09:45", by: "阿凯", note: "已下单，账期 30 天" },
         { stage: "付款", time: "2026-10-24 09:05", by: "小林", note: "尾款 16,500 待付，10-28 到期" }
       ] },
-    { no: "PO-20261023", supplier: "东莞禾木", sku: "SKU-1005", name: "硅胶烘焙垫 3 件套", qty: 3000, amount: 37200, paid: 37200, stage: 4, eta: "2026-11-12", owner: "小周",
+    { no: "PO-20261023", type: "外采", batch: "B20261023-01", shipTo: "Amazon US-B（FBA）", supplier: "东莞禾木", sku: "SKU-1005", name: "硅胶烘焙垫 3 件套", qty: 3000, amount: 37200, paid: 37200, stage: 4, eta: "2026-11-12", owner: "小周",
       timeline: [
         { stage: "采购申请", time: "2026-10-20 10:15", by: "小周", note: "旺季补货 3,000 件" },
         { stage: "审批", time: "2026-10-20 14:00", by: "老板", note: "同意" },
@@ -136,7 +136,7 @@ window.DEMO = {
         { stage: "供应商发货", time: "2026-10-23 17:20", by: "东莞禾木", note: "工厂直发深圳仓" },
         { stage: "头程运输", time: "2026-10-24 08:00", by: "海派物流", note: "深圳 → 新泽西，海运" }
       ] },
-    { no: "PO-20261012", supplier: "宁波恒美", sku: "SKU-1006", name: "露营收纳箱 80L", qty: 1200, amount: 51000, paid: 51000, stage: 8, eta: "2026-10-20", owner: "小周",
+    { no: "PO-20261012", type: "外采", batch: "B20261012-01", shipTo: "Amazon US-A（FBA）", supplier: "宁波恒美", sku: "SKU-1006", name: "露营收纳箱 80L", qty: 1200, amount: 51000, paid: 51000, stage: 8, eta: "2026-10-20", owner: "小周",
       timeline: [
         { stage: "采购申请", time: "2026-10-08 09:00", by: "小周", note: "新品首批" },
         { stage: "审批", time: "2026-10-08 11:20", by: "老板", note: "同意" },
@@ -146,7 +146,8 @@ window.DEMO = {
         { stage: "头程运输", time: "2026-10-12 08:00", by: "海派物流", note: "宁波 → 洛杉矶" },
         { stage: "清关", time: "2026-10-16 10:30", by: "海派物流", note: "放行" },
         { stage: "到仓", time: "2026-10-18 14:00", by: "LA 海外仓", note: "到仓 1,200 件" },
-        { stage: "入库上架", time: "2026-10-19 10:20", by: "阿凯", note: "已上架，库存已更新" }
+        { stage: "入库上架", time: "2026-10-19 10:20", by: "阿凯", note: "已上架，库存已更新" },
+        { stage: "出库发货", time: "2026-10-21 09:40", by: "小周", note: "发 FBA 1,200 件，批次 B20261012-01 已发走" }
       ] }
   ],
 
