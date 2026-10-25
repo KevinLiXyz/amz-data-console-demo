@@ -79,10 +79,10 @@ window.DEMO = {
   ],
 
   todos: [
-    { level: "高", text: "SKU-1003 库存为 0，US-B 仍在售，建议暂停广告", time: "08:12" },
-    { level: "中", text: "10-24 费用分摊未完成（头程 ¥15,800 未分摊到 SKU）", time: "昨天" },
-    { level: "中", text: "PO-20261018 尾款 ¥16,500 将于 10-28 到期", time: "昨天" },
-    { level: "低", text: "销售明细导入 10-24 有 3 行失败（SKU 未匹配）", time: "10-24" }
+    { level: "高", module: "货物流动", text: "SKU-1003 库存为 0，US-B 仍在售", suggest: "暂停广告并补货", time: "10-25 08:12", status: "待处理" },
+    { level: "中", module: "财务中心", text: "10-24 头程 ¥15,800 未分摊到 SKU", suggest: "补分摊，否则毛利失真", time: "10-24 18:20", status: "待处理" },
+    { level: "中", module: "财务中心", text: "PO-20261018 尾款 ¥16,500 于 10-28 到期", suggest: "安排付款", time: "10-24 09:05", status: "待处理" },
+    { level: "低", module: "系统与数据", text: "销售明细导入 10-24 有 3 行失败（SKU 未匹配）", suggest: "补齐 SKU 档案后重导", time: "10-24 21:02", status: "待处理" }
   ],
 
   imports: [
