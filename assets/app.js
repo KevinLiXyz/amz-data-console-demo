@@ -17,6 +17,7 @@
     compare: true,
     masterTab: "stores",
     todoFilter: "全部",
+    purchaseStage: "全部",
     impStep: 1,
     impType: "销售明细"
   };
@@ -34,6 +35,7 @@
   const titles = {
     overview: ["首页总览", "钱去哪了、货在哪、卖得怎么样，一屏看完"],
     todo: ["待办中心", "异常、待付款、未分摊，按优先级处理"],
+    purchase: ["采购流程", "从采购申请到入库上架，一单跟到底"],
     cash: ["资金流动", "账户余额、收支流水、费用分摊与应付账款"],
     goods: ["货物流动", "采购 → 头程 → 在途 → 海外仓库存，一本账"],
     sales: ["销售数据", "销量、售价、退款与 SKU 毛利"],
@@ -123,6 +125,19 @@
         { k: "storage", l: "仓储分摊（¥）", t: "number" }
       ]
     },
+    purchase: {
+      title: "采购单", coll: "purchases", key: "_id",
+      fields: [
+        { k: "no", l: "采购单号", t: "text", req: 1, ph: "如 PO-20261025" },
+        { k: "supplier", l: "供应商", t: "select", opts: ["宁波恒美", "深圳优品", "东莞禾木"] },
+        { k: "sku", l: "SKU", t: "select", opts: () => D.masters.skus.map(s => s.sku) },
+        { k: "qty", l: "采购数量", t: "number", req: 1 },
+        { k: "amount", l: "采购金额（¥）", t: "number", req: 1 },
+        { k: "paid", l: "已付金额（¥）", t: "number" },
+        { k: "eta", l: "预计到仓", t: "date" },
+        { k: "owner", l: "负责人", t: "text" }
+      ]
+    },
     project: {
       title: "开发项目", coll: "projects", key: "_id",
       fields: [
@@ -163,6 +178,89 @@
   const searchBox = (ph) => `<input class="search" data-filter placeholder="${ph}" />`;
 
   /* ---------------- 视图 ---------------- */
+  function purchase() {
+    const stages = D.purchaseStages;
+    const filter = state.purchaseStage || "全部";
+    const counts = stages.map((st, i) => D.purchases.filter(p => p.stage === i).length);
+    const list = D.purchases.map((p, i) => ({ p, i })).filter(({ p }) => filter === "全部" || stages[p.stage] === filter);
+    const inTransit = D.purchases.filter(p => p.stage >= 3 && p.stage <= 6).length;
+    const unpaid = D.purchases.reduce((a, p) => a + (p.amount - p.paid), 0);
+    const arrived = D.purchases.filter(p => p.stage >= 6).length;
+
+    const rows = list.map(({ p, i }) => {
+      const pctDone = Math.round((p.stage + 1) / stages.length * 100);
+      return `<tr data-row>
+        <td class="mono name">${p.no}</td>
+        <td>${esc(p.supplier)}</td>
+        <td>${esc(p.sku)}<div class="muted">${esc(p.name)}</div></td>
+        <td class="num">${num(p.qty)}</td>
+        <td class="num">${money(p.amount)}</td>
+        <td class="num">${p.paid >= p.amount ? badge("已付", "green") : p.paid > 0 ? badge("部分付", "amber") : badge("未付", "red")}</td>
+        <td>${badge(stages[p.stage], p.stage >= 7 ? "green" : p.stage >= 5 ? "blue" : "amber")}</td>
+        <td style="min-width:120px"><div class="progress"><i style="width:${pctDone}%"></i></div><div class="muted" style="font-size:11px">${pctDone}%</div></td>
+        <td class="num">${p.eta}</td>
+        <td class="num">
+          <button class="link" data-act="po-open" data-key="${i}">详情</button>
+          ${p.stage < 7 ? `<button class="link" data-act="po-next" data-key="${i}">推进</button>` : `<span class="muted">已完成</span>`}
+        </td></tr>`;
+    }).join("");
+
+    const chips = `<div class="stage-strip">
+      <button class="stage-chip ${filter === "全部" ? "on" : ""}" data-act="po-filter" data-stage="全部">全部 <b>${D.purchases.length}</b></button>
+      ${stages.map((st, i) => `<button class="stage-chip ${filter === st ? "on" : ""}" data-act="po-filter" data-stage="${st}">${i + 1}. ${st} <b>${counts[i]}</b></button>`).join("")}
+    </div>`;
+
+    return `
+      <div class="grid g4">
+        <div class="card kpi"><div class="label">在途批次</div><div class="value">${inTransit}</div><div class="foot"><span>供应商已发 → 未入库</span></div></div>
+        <div class="card kpi"><div class="label">待付金额</div><div class="value ${unpaid > 0 ? "neg" : ""}">${money(unpaid)}</div><div class="foot"><span>按合同账期付款</span></div></div>
+        <div class="card kpi"><div class="label">已到仓 / 已上架</div><div class="value">${arrived}</div><div class="foot"><span>含已入库批次</span></div></div>
+        <div class="card kpi"><div class="label">平均采购周期</div><div class="value">21 天</div><div class="foot"><span>下单 → 上架</span></div></div>
+      </div>
+
+      <div class="card">
+        ${cardHead("采购推进", "点阶段筛选", `<button class="btn primary" data-act="edit" data-entity="purchase">＋ 新建采购单</button>`)}
+        ${chips}
+        <table class="table"><thead><tr><th>采购单</th><th>供应商</th><th>SKU</th><th class="num">数量</th><th class="num">金额</th><th>付款</th><th>当前阶段</th><th>进度</th><th class="num">预计到仓</th><th class="num">操作</th></tr></thead>
+        <tbody>${rows || emptyRow(10, "当前阶段没有采购单")}</tbody></table>
+        <div class="hr"></div>
+        <div class="note">流程：采购申请 → 审批 → 下单 → 付款 → 供应商发货 → 头程运输 → 清关 → 到仓 → 入库上架。入库后自动写入库存台账（RQ-014/015/016）。</div>
+      </div>`;
+  }
+
+  function openPurchase(i) {
+    const p = D.purchases[i];
+    const stages = D.purchaseStages;
+    const tl = p.timeline.map((t, idx) => `<li class="tl-item ${idx === p.timeline.length - 1 ? "last" : ""}">
+      <span class="tl-dot"></span>
+      <div class="tl-body"><b>${esc(t.stage)}</b><span class="muted">${t.time} · ${esc(t.by)}</span><div class="tl-note">${esc(t.note)}</div></div>
+    </li>`).join("");
+
+    drawerRoot().innerHTML = `
+      <div class="drawer-mask" data-act="close"></div>
+      <aside class="drawer">
+        <header><div><h3>${p.no}</h3><div class="muted" style="font-size:12px">${p.supplier} · ${p.sku} ${p.name}</div></div>
+          <button class="x" data-act="close">×</button></header>
+        <div class="form-body">
+          <div class="grid g2e" style="gap:10px">
+            <div class="kv"><span>采购数量</span><b>${num(p.qty)} 件</b></div>
+            <div class="kv"><span>采购金额</span><b>${money(p.amount)}</b></div>
+            <div class="kv"><span>已付金额</span><b>${money(p.paid)}</b></div>
+            <div class="kv"><span>预计到仓</span><b>${p.eta}</b></div>
+            <div class="kv"><span>当前阶段</span><b>${stages[p.stage]}</b></div>
+            <div class="kv"><span>负责人</span><b>${p.owner}</b></div>
+          </div>
+          <div class="hr"></div>
+          <div class="tl">${tl}</div>
+        </div>
+        <footer>
+          <button type="button" class="btn" data-act="close">关闭</button>
+          ${p.stage < 7 ? `<button type="button" class="btn primary" data-act="po-next" data-key="${i}">推进到「${stages[p.stage + 1]}」</button>` : `<button class="btn" disabled>已完成入库</button>`}
+        </footer>
+      </aside>`;
+    document.body.classList.add("locked");
+  }
+
   function todoPage() {
     const filter = state.todoFilter || "全部";
     const levels = ["全部", "高", "中", "低"];
@@ -537,6 +635,13 @@
       data.margin = data.amount ? +(data.profit / data.amount * 100).toFixed(1) : 0;
     }
     if (entity === "project") data.progress = Math.max(0, Math.min(100, +data.progress || 0));
+    if (entity === "purchase") {
+      data.paid = +data.paid || 0;
+      data.stage = 0;
+      const sku = D.masters.skus.find(x => x.sku === data.sku);
+      data.name = sku ? sku.name : "";
+      data.timeline = [{ stage: "采购申请", time: new Date().toLocaleString("zh-CN", { hour12: false }).replace(/\//g, "-"), by: "老板", note: "新建采购单" }];
+    }
 
     if (idx == null) {
       if (entity === "finance") data.date = data.date || "2026-10-25";
@@ -647,7 +752,7 @@
   }
 
   /* ---------------- 路由 ---------------- */
-  const views = { overview, todo: todoPage, cash, goods, sales, product, import: importer, master, account };
+  const views = { overview, todo: todoPage, purchase, cash, goods, sales, product, import: importer, master, account };
 
   function render() {
     const route = (location.hash.replace(/^#\//, "") || "overview").split("?")[0];
@@ -691,6 +796,20 @@
       if (act === "close") { closeForm(); return; }
       if (act === "tab") { state.masterTab = el.dataset.tab; render(); return; }
       if (act === "todo-filter") { state.todoFilter = el.dataset.level; render(); return; }
+      if (act === "po-filter") { state.purchaseStage = el.dataset.stage; render(); return; }
+      if (act === "po-open") { openPurchase(Number(el.dataset.key)); return; }
+      if (act === "po-next") {
+        const i = Number(el.dataset.key);
+        const p = D.purchases[i];
+        if (p.stage < D.purchaseStages.length - 1) {
+          p.stage += 1;
+          p.timeline.push({ stage: D.purchaseStages[p.stage], time: new Date().toLocaleString("zh-CN", { hour12: false }).replace(/\//g, "-"), by: "老板", note: "手动推进" });
+          toast("已推进到「" + D.purchaseStages[p.stage] + "」");
+        }
+        closeForm();
+        render();
+        return;
+      }
       if (act === "todo-done") {
         const i = Number(el.dataset.key);
         D.todos[i].status = "已处理";
