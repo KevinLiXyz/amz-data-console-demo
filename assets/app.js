@@ -129,6 +129,9 @@
       title: "采购单", coll: "purchases", key: "_id",
       fields: [
         { k: "no", l: "采购单号", t: "text", req: 1, ph: "如 PO-20261025" },
+        { k: "type", l: "采购类型", t: "select", opts: ["外采", "代加工"] },
+        { k: "batch", l: "批次号", t: "text", ph: "如 B20261025-01" },
+        { k: "shipTo", l: "发货去向", t: "select", opts: ["Amazon US-A（FBA）", "Amazon US-B（FBA）", "Amazon DE-A（FBA）", "海外仓"] },
         { k: "supplier", l: "供应商", t: "select", opts: ["宁波恒美", "深圳优品", "东莞禾木"] },
         { k: "sku", l: "SKU", t: "select", opts: () => D.masters.skus.map(s => s.sku) },
         { k: "qty", l: "采购数量", t: "number", req: 1 },
@@ -185,12 +188,14 @@
     const list = D.purchases.map((p, i) => ({ p, i })).filter(({ p }) => filter === "全部" || stages[p.stage] === filter);
     const inTransit = D.purchases.filter(p => p.stage >= 3 && p.stage <= 6).length;
     const unpaid = D.purchases.reduce((a, p) => a + (p.amount - p.paid), 0);
-    const arrived = D.purchases.filter(p => p.stage >= 6).length;
+    const toShip = D.purchases.filter(p => p.stage === 7).length;
+    const shipped = D.purchases.filter(p => p.stage === 8).length;
 
     const rows = list.map(({ p, i }) => {
       const pctDone = Math.round((p.stage + 1) / stages.length * 100);
       return `<tr data-row>
-        <td class="mono name">${p.no}</td>
+        <td class="mono name">${p.no}<div class="muted">${p.batch || ""}</div></td>
+        <td>${badge(p.type, p.type === "代加工" ? "blue" : "gray")}</td>
         <td>${esc(p.supplier)}</td>
         <td>${esc(p.sku)}<div class="muted">${esc(p.name)}</div></td>
         <td class="num">${num(p.qty)}</td>
@@ -199,6 +204,7 @@
         <td>${badge(stages[p.stage], p.stage >= 7 ? "green" : p.stage >= 5 ? "blue" : "amber")}</td>
         <td style="min-width:120px"><div class="progress"><i style="width:${pctDone}%"></i></div><div class="muted" style="font-size:11px">${pctDone}%</div></td>
         <td class="num">${p.eta}</td>
+        <td class="muted">${esc(p.shipTo || "")}</td>
         <td class="num">
           <button class="link" data-act="po-open" data-key="${i}">详情</button>
           ${p.stage < 7 ? `<button class="link" data-act="po-next" data-key="${i}">推进</button>` : `<span class="muted">已完成</span>`}
@@ -214,17 +220,17 @@
       <div class="grid g4">
         <div class="card kpi"><div class="label">在途批次</div><div class="value">${inTransit}</div><div class="foot"><span>供应商已发 → 未入库</span></div></div>
         <div class="card kpi"><div class="label">待付金额</div><div class="value ${unpaid > 0 ? "neg" : ""}">${money(unpaid)}</div><div class="foot"><span>按合同账期付款</span></div></div>
-        <div class="card kpi"><div class="label">已到仓 / 已上架</div><div class="value">${arrived}</div><div class="foot"><span>含已入库批次</span></div></div>
-        <div class="card kpi"><div class="label">平均采购周期</div><div class="value">21 天</div><div class="foot"><span>下单 → 上架</span></div></div>
+        <div class="card kpi"><div class="label">待出库发货</div><div class="value ${toShip ? "" : ""}">${toShip}</div><div class="foot"><span>已入库未发走</span></div></div>
+        <div class="card kpi"><div class="label">已发走批次</div><div class="value">${shipped}</div><div class="foot"><span>发 FBA / 海外仓</span></div></div>
       </div>
 
       <div class="card">
         ${cardHead("采购推进", "点阶段筛选", `<button class="btn primary" data-act="edit" data-entity="purchase">＋ 新建采购单</button>`)}
         ${chips}
-        <table class="table"><thead><tr><th>采购单</th><th>供应商</th><th>SKU</th><th class="num">数量</th><th class="num">金额</th><th>付款</th><th>当前阶段</th><th>进度</th><th class="num">预计到仓</th><th class="num">操作</th></tr></thead>
-        <tbody>${rows || emptyRow(10, "当前阶段没有采购单")}</tbody></table>
+        <table class="table"><thead><tr><th>采购单</th><th>供应商</th><th>SKU</th><th class="num">数量</th><th class="num">金额</th><th>付款</th><th>当前阶段</th><th>进度</th><th class="num">预计到仓</th><th>发货去向</th><th class="num">操作</th></tr></thead>
+        <tbody>${rows || emptyRow(12, "当前阶段没有采购单")}</tbody></table>
         <div class="hr"></div>
-        <div class="note">流程：采购申请 → 审批 → 下单 → 付款 → 供应商发货 → 头程运输 → 清关 → 到仓 → 入库上架。入库后自动写入库存台账（RQ-014/015/016）。</div>
+        <div class="note">流程（货物线）：采购申请 → 审批 → 下单 → 供应商发货 → 头程运输 → 清关 → 到仓 → 入库上架 → 出库发货。付款是并行的「钱线」，不占阶段：外采按合同付款，代加工按进度付款。入库写库存台账，出库发货扣减库存（RQ-014/015/016）。</div>
       </div>`;
   }
 
@@ -248,6 +254,9 @@
             <div class="kv"><span>已付金额</span><b>${money(p.paid)}</b></div>
             <div class="kv"><span>预计到仓</span><b>${p.eta}</b></div>
             <div class="kv"><span>当前阶段</span><b>${stages[p.stage]}</b></div>
+            <div class="kv"><span>采购类型</span><b>${p.type || "—"}</b></div>
+            <div class="kv"><span>批次号</span><b>${p.batch || "—"}</b></div>
+            <div class="kv"><span>发货去向</span><b>${p.shipTo || "—"}</b></div>
             <div class="kv"><span>负责人</span><b>${p.owner}</b></div>
           </div>
           <div class="hr"></div>
@@ -637,6 +646,8 @@
     if (entity === "project") data.progress = Math.max(0, Math.min(100, +data.progress || 0));
     if (entity === "purchase") {
       data.paid = +data.paid || 0;
+      data.type = data.type || "外采";
+      data.batch = data.batch || "";
       data.stage = 0;
       const sku = D.masters.skus.find(x => x.sku === data.sku);
       data.name = sku ? sku.name : "";
