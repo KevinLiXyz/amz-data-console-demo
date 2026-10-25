@@ -18,6 +18,7 @@
     masterTab: "stores",
     todoFilter: "全部",
     purchaseStage: "全部",
+    tracePos: "全部",
     impStep: 1,
     impType: "销售明细"
   };
@@ -36,6 +37,7 @@
     overview: ["首页总览", "钱去哪了、货在哪、卖得怎么样，一屏看完"],
     todo: ["待办中心", "异常、待付款、未分摊，按优先级处理"],
     purchase: ["采购流程", "从采购申请到入库上架，一单跟到底"],
+    trace: ["批次追踪", "这批货现在在哪、停了几天、下一步是什么"],
     cash: ["资金流动", "账户余额、收支流水、费用分摊与应付账款"],
     goods: ["货物流动", "采购 → 头程 → 在途 → 海外仓库存，一本账"],
     sales: ["销售数据", "销量、售价、退款与 SKU 毛利"],
@@ -181,6 +183,65 @@
   const searchBox = (ph) => `<input class="search" data-filter placeholder="${ph}" />`;
 
   /* ---------------- 视图 ---------------- */
+  function trace() {
+    const NOW = new Date("2026-10-25T11:40:00");
+    const posOf = (stage) => ({
+      "采购申请": "供应商/工厂", "审批": "内部", "下单": "供应商/工厂",
+      "供应商发货": "工厂 → 港口", "头程运输": "海上/在途", "清关": "目的港",
+      "到仓": "海外仓（待上架）", "入库上架": "海外仓（可售）", "出库发货": "已发 FBA"
+    })[stage] || "—";
+    const daysIn = (p) => {
+      const last = p.timeline[p.timeline.length - 1];
+      if (!last) return 0;
+      const t = new Date(last.time.replace(" ", "T"));
+      if (isNaN(t)) return 0;
+      return Math.max(0, Math.floor((NOW - t) / 86400000));
+    };
+    const rowsData = D.purchases.map((p, i) => {
+      const stage = D.purchaseStages[p.stage];
+      const days = daysIn(p);
+      const next = p.stage < D.purchaseStages.length - 1 ? D.purchaseStages[p.stage + 1] : "已完成";
+      return { p, i, stage, days, next, pos: posOf(stage), warn: days >= 3 && p.stage < 8 };
+    });
+    const filter = state.tracePos || "全部";
+    const positions = ["全部", "供应商/工厂", "海上/在途", "目的港", "海外仓（待上架）", "海外仓（可售）", "已发 FBA"];
+    const list = rowsData.filter(r => filter === "全部" || r.pos === filter);
+
+    const rows = list.map(({ p, i, stage, days, next, pos, warn }) => `<tr data-row class="${warn ? "warn-row" : ""}">
+      <td class="mono name">${p.batch || "—"}</td>
+      <td>${p.no}</td>
+      <td>${esc(p.sku)}<div class="muted">${esc(p.name)}</div></td>
+      <td>${badge(p.type, p.type === "代加工" ? "blue" : "gray")}</td>
+      <td class="num">${num(p.qty)}</td>
+      <td>${badge(stage, p.stage >= 8 ? "green" : p.stage >= 5 ? "blue" : "amber")}</td>
+      <td>${pos}</td>
+      <td class="num">${days > 0 ? `${days} 天` : "今天"}${warn ? ` <span class="badge amber">停留偏久</span>` : ""}</td>
+      <td>${next}</td>
+      <td class="num">${p.eta}</td>
+      <td class="num"><button class="link" data-act="po-open" data-key="${i}">时间轴</button></td>
+    </tr>`).join("");
+
+    const counts = positions.slice(1).map(pos => ({ pos, n: rowsData.filter(r => r.pos === pos).length })).filter(x => x.n);
+    const warnCount = rowsData.filter(r => r.warn).length;
+
+    return `
+      <div class="grid g4">
+        <div class="card kpi"><div class="label">在跟批次</div><div class="value">${rowsData.filter(r => r.p.stage < 8).length}</div><div class="foot"><span>未发走的货</span></div></div>
+        <div class="card kpi"><div class="label">已发走</div><div class="value">${rowsData.filter(r => r.p.stage === 8).length}</div><div class="foot"><span>发 FBA / 海外仓</span></div></div>
+        <div class="card kpi"><div class="label">停留偏久</div><div class="value ${warnCount ? "neg" : ""}">${warnCount}</div><div class="foot"><span>同一节点 ≥ 3 天</span></div></div>
+        <div class="card kpi"><div class="label">在途件数</div><div class="value">${num(rowsData.filter(r => [4, 5].includes(r.p.stage)).reduce((a, r) => a + r.p.qty, 0))}</div><div class="foot"><span>海上 + 清关</span></div></div>
+      </div>
+
+      <div class="card">
+        ${cardHead("货在哪", "按批次看当前位置", `<span class="muted" style="font-size:12px">数据截至 2026-10-25 11:40</span>`)}
+        <div class="stage-strip">${positions.map(pos => `<button class="stage-chip ${filter === pos ? "on" : ""}" data-act="trace-filter" data-pos="${pos}">${pos}${pos === "全部" ? ` <b>${rowsData.length}</b>` : ` <b>${rowsData.filter(r => r.pos === pos).length}</b>`}</button>`).join("")}</div>
+        <table class="table"><thead><tr><th>批次号</th><th>采购单</th><th>SKU</th><th>类型</th><th class="num">数量</th><th>当前状态</th><th>当前位置</th><th class="num">已停留</th><th>下一步</th><th class="num">预计到仓</th><th class="num">操作</th></tr></thead>
+        <tbody>${rows || emptyRow(11, "这个位置没有货")}</tbody></table>
+        <div class="hr"></div>
+        <div class="note">一个批次 = 一次采购的数量，从建单到发走都不拆开。停留超过 3 天自动进待办；出库发货后批次记为已发走，库存相应扣减。</div>
+      </div>`;
+  }
+
   function purchase() {
     const stages = D.purchaseStages;
     const filter = state.purchaseStage || "全部";
@@ -763,7 +824,7 @@
   }
 
   /* ---------------- 路由 ---------------- */
-  const views = { overview, todo: todoPage, purchase, cash, goods, sales, product, import: importer, master, account };
+  const views = { overview, todo: todoPage, purchase, trace, cash, goods, sales, product, import: importer, master, account };
 
   function render() {
     const route = (location.hash.replace(/^#\//, "") || "overview").split("?")[0];
@@ -808,6 +869,7 @@
       if (act === "tab") { state.masterTab = el.dataset.tab; render(); return; }
       if (act === "todo-filter") { state.todoFilter = el.dataset.level; render(); return; }
       if (act === "po-filter") { state.purchaseStage = el.dataset.stage; render(); return; }
+      if (act === "trace-filter") { state.tracePos = el.dataset.pos; render(); return; }
       if (act === "po-open") { openPurchase(Number(el.dataset.key)); return; }
       if (act === "po-next") {
         const i = Number(el.dataset.key);
