@@ -19,6 +19,7 @@
     todoFilter: "全部",
     purchaseStage: "全部",
     tracePos: "全部",
+    purchaseTab: "list",
     impStep: 1,
     impType: "销售明细"
   };
@@ -36,8 +37,7 @@
   const titles = {
     overview: ["首页总览", "钱去哪了、货在哪、卖得怎么样，一屏看完"],
     todo: ["待办中心", "异常、待付款、未分摊，按优先级处理"],
-    purchase: ["采购流程", "从采购申请到入库上架，一单跟到底"],
-    trace: ["批次追踪", "这批货现在在哪、停了几天、下一步是什么"],
+    purchase: ["采购管理", "采购单推进 + 批次追踪，一页管到底"],
     cash: ["资金流动", "账户余额、收支流水、费用分摊与应付账款"],
     goods: ["货物流动", "采购 → 头程 → 在途 → 海外仓库存，一本账"],
     sales: ["销售数据", "销量、售价、退款与 SKU 毛利"],
@@ -183,7 +183,7 @@
   const searchBox = (ph) => `<input class="search" data-filter placeholder="${ph}" />`;
 
   /* ---------------- 视图 ---------------- */
-  function trace() {
+  function traceBody() {
     const NOW = new Date("2026-10-25T11:40:00");
     const posOf = (stage) => ({
       "采购申请": "供应商/工厂", "审批": "内部", "下单": "供应商/工厂",
@@ -243,6 +243,15 @@
   }
 
   function purchase() {
+    const tab = state.purchaseTab || "list";
+    const bar = `<div class="tabs page-tabs">
+      <button class="tab ${tab === "list" ? "active" : ""}" data-act="po-tab" data-tab="list">采购单</button>
+      <button class="tab ${tab === "trace" ? "active" : ""}" data-act="po-tab" data-tab="trace">批次追踪</button>
+    </div>`;
+    return bar + (tab === "trace" ? traceBody() : purchaseBody());
+  }
+
+  function purchaseBody() {
     const stages = D.purchaseStages;
     const filter = state.purchaseStage || "全部";
     const counts = stages.map((st, i) => D.purchases.filter(p => p.stage === i).length);
@@ -824,10 +833,11 @@
   }
 
   /* ---------------- 路由 ---------------- */
-  const views = { overview, todo: todoPage, purchase, trace, cash, goods, sales, product, import: importer, master, account };
+  const views = { overview, todo: todoPage, purchase, cash, goods, sales, product, import: importer, master, account };
 
   function render() {
     const route = (location.hash.replace(/^#\//, "") || "overview").split("?")[0];
+    if (route === "trace") { state.purchaseTab = "trace"; location.replace("#/purchase"); return; }
     state.route = views[route] ? route : "overview";
     document.getElementById("view").innerHTML = views[state.route]();
     document.querySelectorAll("#view table").forEach(t => {
@@ -870,6 +880,7 @@
       if (act === "todo-filter") { state.todoFilter = el.dataset.level; render(); return; }
       if (act === "po-filter") { state.purchaseStage = el.dataset.stage; render(); return; }
       if (act === "trace-filter") { state.tracePos = el.dataset.pos; render(); return; }
+      if (act === "po-tab") { state.purchaseTab = el.dataset.tab; render(); return; }
       if (act === "po-open") { openPurchase(Number(el.dataset.key)); return; }
       if (act === "po-next") {
         const i = Number(el.dataset.key);
