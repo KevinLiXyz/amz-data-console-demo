@@ -219,3 +219,100 @@ button, select { font: inherit; }
   .g4 { grid-template-columns: 1fr; }
   .filters { margin-left: 0; }
 }
+
+/* ---------- 列表操作 ---------- */
+.row-actions { display: flex; gap: 10px; justify-content: flex-end; }
+.link {
+  border: 0; background: none; color: var(--brand); cursor: pointer;
+  font-size: 12.5px; padding: 2px 0;
+}
+.link:hover { text-decoration: underline; }
+.link.danger { color: var(--bad); }
+.empty { text-align: center; color: var(--muted); padding: 26px 0 !important; }
+
+.card-head .right { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.card-head .right .search { width: 190px; }
+
+/* ---------- tabs ---------- */
+.tabs .cnt { color: #94a3b8; font-size: 11.5px; margin-left: 4px; }
+
+/* ---------- 抽屉表单 ---------- */
+body.locked { overflow: hidden; }
+.drawer-mask {
+  position: fixed; inset: 0; background: rgba(15, 23, 42, .32);
+  z-index: 60; animation: fade .18s ease;
+}
+.drawer {
+  position: fixed; top: 0; right: 0; bottom: 0; width: 460px; max-width: 92vw;
+  background: #fff; z-index: 61; display: flex; flex-direction: column;
+  box-shadow: -12px 0 40px rgba(15, 23, 42, .16); animation: slide .22s ease;
+}
+.drawer header {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  padding: 18px 20px 14px; border-bottom: 1px solid var(--line);
+}
+.drawer h3 { margin: 0 0 2px; font-size: 15.5px; }
+.drawer .x {
+  border: 0; background: #f1f4f8; width: 30px; height: 30px; border-radius: 8px;
+  font-size: 18px; line-height: 1; color: #64748b; cursor: pointer;
+}
+.drawer form { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+.drawer .form-body { padding: 16px 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
+.drawer footer {
+  padding: 12px 20px; border-top: 1px solid var(--line);
+  display: flex; justify-content: flex-end; gap: 8px; background: #fbfcfe;
+}
+.field { display: flex; flex-direction: column; gap: 5px; }
+.field > span { font-size: 12.5px; color: var(--ink-2); }
+.field i { color: var(--bad); font-style: normal; margin-left: 2px; }
+.field input, .field select {
+  border: 1px solid var(--line); border-radius: 9px; padding: 9px 11px;
+  font-size: 13px; outline: 0; background: #fff; color: var(--ink);
+}
+.field input:focus, .field select:focus { border-color: #b9cdf3; box-shadow: 0 0 0 3px #eaf0fe; }
+
+@keyframes fade { from { opacity: 0 } to { opacity: 1 } }
+@keyframes slide { from { transform: translateX(24px); opacity: .6 } to { transform: none; opacity: 1 } }
+
+/* ---------- toast ---------- */
+#toast {
+  position: fixed; left: 50%; bottom: 28px; transform: translate(-50%, 10px);
+  background: #111c2e; color: #fff; padding: 10px 16px; border-radius: 10px;
+  font-size: 13px; opacity: 0; pointer-events: none; transition: all .2s ease; z-index: 80;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, .25);
+}
+#toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+/* ---------- 导入向导 ---------- */
+.steps { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
+.step {
+  font-size: 12px; color: var(--muted); background: #f2f5f9;
+  padding: 5px 10px; border-radius: 999px;
+}
+.step.on { background: var(--brand-soft); color: var(--brand); font-weight: 600; }
+.step.done { background: var(--good-soft); color: var(--good); }
+.choice-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.choice {
+  display: flex; justify-content: space-between; align-items: center;
+  border: 1px solid var(--line); background: #fff; border-radius: 11px;
+  padding: 14px 14px; font-size: 13.5px; cursor: pointer; color: var(--ink);
+}
+.choice:hover { border-color: #c9d8f1; }
+.choice.on { border-color: var(--brand); box-shadow: 0 0 0 3px #eaf0fe; background: #fbfdff; }
+.choice .muted { font-size: 11.5px; }
+
+.stat { background: #f8fafc; border: 1px solid var(--line); border-radius: 11px; padding: 12px 14px; }
+.stat b { display: block; font-size: 22px; margin-top: 2px; font-variant-numeric: tabular-nums; }
+.stat b.ok { color: var(--good); }
+.stat b.err { color: var(--bad); }
+
+.done-box { display: flex; gap: 14px; align-items: center; padding: 18px; background: #f6fbf8; border: 1px solid #d8efe3; border-radius: 12px; }
+.done-ico {
+  width: 42px; height: 42px; border-radius: 50%; background: var(--good-soft);
+  color: var(--good); display: grid; place-items: center; font-size: 20px; font-weight: 700;
+}
+
+@media (max-width: 720px) {
+  .choice-grid { grid-template-columns: 1fr; }
+  .drawer { width: 100%; }
+}

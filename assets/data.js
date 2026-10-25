@@ -105,5 +105,38 @@ window.DEMO = {
     { time: "2026-10-24 21:02", user: "lin", module: "销售数据", action: "导入", detail: "sales_20261024.xlsx（3 行失败）" },
     { time: "2026-10-24 20:40", user: "kai", module: "货物流", action: "导入", detail: "stock_20261024.xlsx" },
     { time: "2026-10-24 09:12", user: "boss", module: "账号", action: "停用", detail: "用户 chen" }
-  ]
+  ],
+
+  masters: {
+    stores: [
+      { code: "US-A", name: "美国店 A", site: "美国", status: "启用" },
+      { code: "US-B", name: "美国店 B", site: "美国", status: "启用" },
+      { code: "DE-A", name: "德国店 A", site: "德国", status: "启用" },
+      { code: "UK-A", name: "英国店 A", site: "英国", status: "停用" }
+    ],
+    skus: [
+      { sku: "SKU-1001", name: "折叠收纳箱 60L", category: "家居收纳", cost: 42.5, status: "在售" },
+      { sku: "SKU-1002", name: "厨房沥水架", category: "厨房用品", cost: 28.0, status: "在售" },
+      { sku: "SKU-1003", name: "宠物自动喂食器", category: "宠物用品", cost: 96.0, status: "在售" },
+      { sku: "SKU-1004", name: "车载吸尘器", category: "汽车用品", cost: 118.0, status: "在售" },
+      { sku: "SKU-1005", name: "硅胶烘焙垫 3 件套", category: "厨房用品", cost: 12.4, status: "在售" },
+      { sku: "SKU-1006", name: "露营收纳箱 80L", category: "家居收纳", cost: 55.0, status: "停售" }
+    ],
+    warehouses: [
+      { name: "LA 海外仓", type: "海外仓", location: "美国 洛杉矶", status: "启用" },
+      { name: "NJ 海外仓", type: "海外仓", location: "美国 新泽西", status: "启用" },
+      { name: "汉堡海外仓", type: "海外仓", location: "德国 汉堡", status: "启用" },
+      { name: "海派物流", type: "货代", location: "深圳", status: "启用" },
+      { name: "宁波恒美仓", type: "国内仓", location: "宁波", status: "启用" }
+    ],
+    subjects: [
+      { code: "C-01", name: "采购货款", type: "支出", status: "启用" },
+      { code: "C-02", name: "头程运费", type: "支出", status: "启用" },
+      { code: "C-03", name: "仓储费", type: "支出", status: "启用" },
+      { code: "C-04", name: "广告费", type: "支出", status: "启用" },
+      { code: "C-05", name: "平台佣金", type: "支出", status: "启用" },
+      { code: "C-06", name: "店铺回款", type: "收入", status: "启用" },
+      { code: "C-07", name: "其他收入", type: "收入", status: "启用" }
+    ]
+  }
 };
