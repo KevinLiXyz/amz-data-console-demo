@@ -535,6 +535,27 @@ tbody tr.warn-row:hover td { background: #fff6e6; }
 .table.wide th, .table.wide td { white-space: nowrap; }
 .table.wide td .muted { white-space: nowrap; }
 
+/* 曲线悬停：产品编号 / 规格 / 数量 */
+.chart-tip {
+  position: absolute; z-index: 20; min-width: 230px; max-width: 300px;
+  background: #fff; border: 1px solid #dbe3ee; border-radius: 10px;
+  box-shadow: 0 12px 30px rgba(15, 23, 42, .14); padding: 10px 12px;
+  font-size: 12px; color: var(--ink); pointer-events: none; opacity: 0;
+  transition: opacity .12s ease;
+}
+.chart-tip .ct-head { font-weight: 650; font-size: 12.5px; margin-bottom: 6px; }
+.chart-tip .ct-total {
+  display: flex; gap: 10px; flex-wrap: wrap; color: var(--muted);
+  font-size: 11.5px; padding-bottom: 7px; margin-bottom: 7px; border-bottom: 1px dashed var(--line);
+}
+.chart-tip .ct-total b { color: var(--ink); font-variant-numeric: tabular-nums; }
+.chart-tip .ct-title { font-size: 11px; color: #94a3b8; margin-bottom: 4px; }
+.chart-tip .ct-row { display: flex; gap: 8px; align-items: baseline; padding: 2px 0; }
+.chart-tip .ct-row .ct-sku { font-variant-numeric: tabular-nums; font-weight: 600; }
+.chart-tip .ct-row .ct-spec { color: var(--muted); flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.chart-tip .ct-row b { font-variant-numeric: tabular-nums; }
+.chart-tip .ct-more { margin-top: 5px; color: #94a3b8; font-size: 11px; }
+
 </style>
 <script>
 /**
@@ -662,12 +683,12 @@ tbody tr.warn-row:hover td { background: #fff6e6; }
 
   // 一条记录 = 店铺(公司) × 站点(销售国) × SKU 的唯一身份
   const skus = [
-    { sku: "SKU-1001", name: "折叠收纳箱 60L", store: "深圳市星野科技有限公司", site: "美国", asin: "B0B8X1Q2M3", price: 35.99, baseQty: 4, cost: 92, delivery: 38, freight: 6, storage: 2 },
-    { sku: "SKU-1002", name: "厨房沥水架", store: "深圳市星野科技有限公司", site: "美国", asin: "B0B7K4L9P1", price: 19.99, baseQty: 3, cost: 48, delivery: 26, freight: 3, storage: 1 },
-    { sku: "SKU-1003", name: "宠物自动喂食器", store: "星野贸易（香港）有限公司", site: "美国", asin: "B0C2M8T6R4", price: 89.99, baseQty: 1, cost: 235, delivery: 82, freight: 12, storage: 4 },
-    { sku: "SKU-1004", name: "车载吸尘器", store: "Nordwind GmbH", site: "德国", asin: "B0D5N3V7S2", price: 69.99, baseQty: 1, cost: 205, delivery: 75, freight: 14, storage: 4 },
-    { sku: "SKU-1005", name: "硅胶烘焙垫 3 件套", store: "星野贸易（香港）有限公司", site: "美国", asin: "B0B9P2D4W8", price: 12.99, baseQty: 12, cost: 26, delivery: 14, freight: 2, storage: 0.5 },
-    { sku: "SKU-1006", name: "露营折叠桌", store: "Nordwind GmbH", site: "德国", asin: "B0F1Q7H5K9", price: 45.99, baseQty: 2, cost: 128, delivery: 52, freight: 9, storage: 2 }
+    { sku: "SKU-1001", name: "折叠收纳箱 60L", spec: "深灰 / 60L", store: "深圳市星野科技有限公司", site: "美国", asin: "B0B8X1Q2M3", price: 35.99, baseQty: 4, cost: 92, delivery: 38, freight: 6, storage: 2 },
+    { sku: "SKU-1002", name: "厨房沥水架", spec: "白色 / 双层", store: "深圳市星野科技有限公司", site: "美国", asin: "B0B7K4L9P1", price: 19.99, baseQty: 3, cost: 48, delivery: 26, freight: 3, storage: 1 },
+    { sku: "SKU-1003", name: "宠物自动喂食器", spec: "白色 / 4L", store: "星野贸易（香港）有限公司", site: "美国", asin: "B0C2M8T6R4", price: 89.99, baseQty: 1, cost: 235, delivery: 82, freight: 12, storage: 4 },
+    { sku: "SKU-1004", name: "车载吸尘器", spec: "黑色 / 无线", store: "Nordwind GmbH", site: "德国", asin: "B0D5N3V7S2", price: 69.99, baseQty: 1, cost: 205, delivery: 75, freight: 14, storage: 4 },
+    { sku: "SKU-1005", name: "硅胶烘焙垫 3 件套", spec: "彩色 / 3 件套", store: "星野贸易（香港）有限公司", site: "美国", asin: "B0B9P2D4W8", price: 12.99, baseQty: 12, cost: 26, delivery: 14, freight: 2, storage: 0.5 },
+    { sku: "SKU-1006", name: "露营折叠桌", spec: "木纹 / 120cm", store: "Nordwind GmbH", site: "德国", asin: "B0F1Q7H5K9", price: 45.99, baseQty: 2, cost: 128, delivery: 52, freight: 9, storage: 2 }
   ];
 
   // ---------- 广告活动（SP 商品推广 / SB 品牌推广 / SD 展示推广） ----------
@@ -738,7 +759,7 @@ tbody tr.warn-row:hover td { background: #fff6e6; }
       const ad = adBySkuDate[s.sku + "|" + date] || 0;
       const profit = amount - refund - s.cost * qty - s.freight * qty - s.storage * qty - commission - s.delivery * qty - ad;
       sales.push({
-        date, store: s.store, site: s.site, sku: s.sku, name: s.name, asin: s.asin,
+        date, store: s.store, site: s.site, sku: s.sku, name: s.name, spec: s.spec, asin: s.asin,
         currency: s.site === "德国" ? "EUR" : "USD",
         qty, amountLocal, amount, refund, commission, ad, profit,
         margin: amount ? +(profit / amount * 100).toFixed(1) : 0
@@ -748,12 +769,12 @@ tbody tr.warn-row:hover td { background: #fff6e6; }
 
   // ---------- FBA 库存（不做海外仓） ----------
   const stock = [
-    { sku: "SKU-1001", name: "折叠收纳箱 60L", store: "深圳市星野科技有限公司", site: "美国", asin: "B0B8X1Q2M3", fba: 820, domestic: 600, inbound: 480, age90: 0, sales30: 512, eta: "2026-11-02", status: "正常" },
-    { sku: "SKU-1002", name: "厨房沥水架", store: "深圳市星野科技有限公司", site: "美国", asin: "B0B7K4L9P1", fba: 64, domestic: 0, inbound: 0, age90: 64, sales30: 196, eta: "—", status: "断货风险" },
-    { sku: "SKU-1003", name: "宠物自动喂食器", store: "星野贸易（香港）有限公司", site: "美国", asin: "B0C2M8T6R4", fba: 0, domestic: 300, inbound: 300, age90: 0, sales30: 96, eta: "2026-11-11", status: "已断货" },
-    { sku: "SKU-1004", name: "车载吸尘器", store: "Nordwind GmbH", site: "德国", asin: "B0D5N3V7S2", fba: 210, domestic: 0, inbound: 120, age90: 0, sales30: 61, eta: "2026-10-28", status: "偏紧" },
-    { sku: "SKU-1005", name: "硅胶烘焙垫 3 件套", store: "星野贸易（香港）有限公司", site: "美国", asin: "B0B9P2D4W8", fba: 1530, domestic: 0, inbound: 0, age90: 0, sales30: 530, eta: "—", status: "健康" },
-    { sku: "SKU-1006", name: "露营折叠桌", store: "Nordwind GmbH", site: "德国", asin: "B0F1Q7H5K9", fba: 340, domestic: 200, inbound: 0, age90: 12, sales30: 88, eta: "2026-11-06", status: "偏紧" }
+    { sku: "SKU-1001", name: "折叠收纳箱 60L", spec: "深灰 / 60L", store: "深圳市星野科技有限公司", site: "美国", asin: "B0B8X1Q2M3", fba: 820, domestic: 600, inbound: 480, age90: 0, sales30: 512, eta: "2026-11-02", status: "正常" },
+    { sku: "SKU-1002", name: "厨房沥水架", spec: "白色 / 双层", store: "深圳市星野科技有限公司", site: "美国", asin: "B0B7K4L9P1", fba: 64, domestic: 0, inbound: 0, age90: 64, sales30: 196, eta: "—", status: "断货风险" },
+    { sku: "SKU-1003", name: "宠物自动喂食器", spec: "白色 / 4L", store: "星野贸易（香港）有限公司", site: "美国", asin: "B0C2M8T6R4", fba: 0, domestic: 300, inbound: 300, age90: 0, sales30: 96, eta: "2026-11-11", status: "已断货" },
+    { sku: "SKU-1004", name: "车载吸尘器", spec: "黑色 / 无线", store: "Nordwind GmbH", site: "德国", asin: "B0D5N3V7S2", fba: 210, domestic: 0, inbound: 120, age90: 0, sales30: 61, eta: "2026-10-28", status: "偏紧" },
+    { sku: "SKU-1005", name: "硅胶烘焙垫 3 件套", spec: "彩色 / 3 件套", store: "星野贸易（香港）有限公司", site: "美国", asin: "B0B9P2D4W8", fba: 1530, domestic: 0, inbound: 0, age90: 0, sales30: 530, eta: "—", status: "健康" },
+    { sku: "SKU-1006", name: "露营折叠桌", spec: "木纹 / 120cm", store: "Nordwind GmbH", site: "德国", asin: "B0F1Q7H5K9", fba: 340, domestic: 200, inbound: 0, age90: 12, sales30: 88, eta: "2026-11-06", status: "偏紧" }
   ];
 
   // ---------- SKU 利润表（成本项每天可能变，录入时留更新日期） ----------
@@ -764,7 +785,7 @@ tbody tr.warn-row:hover td { background: #fff6e6; }
     const ad = +(price * 0.10).toFixed(2);
     const profit = +(price - s.cost - s.freight - s.storage - commission - s.delivery - ad).toFixed(2);
     return {
-      sku: s.sku, name: s.name, store: s.store, site: s.site,
+      sku: s.sku, name: s.name, spec: s.spec, store: s.store, site: s.site,
       price, cost: s.cost, freight: s.freight, storage: s.storage,
       commission, delivery: s.delivery, ad, profit,
       margin: +(profit / price * 100).toFixed(1),
@@ -1081,7 +1102,7 @@ tbody tr.warn-row:hover td { background: #fff6e6; }
     const stockRows = D.stock.slice(0, 4).map(s => {
       const perDay = s.sales30 / 30;
       const days = perDay > 0 ? Math.round(s.fba / perDay) : 0;
-      return `<tr data-row><td class="name">${esc(s.sku)}<div class="muted">${esc(s.name)}</div></td>
+      return `<tr data-row><td class="name">${esc(s.sku)}<div class="muted">${esc(s.name)} · ${esc(s.spec || specOf(s.sku))}</div></td>
       <td>${esc(s.store)}</td><td>${s.site}</td><td class="num">${num(s.fba)}</td><td class="num">${days} 天</td>
       <td>${s.status === "健康" ? badge("健康", "green") : s.status === "已断货" ? badge("已断货", "red") : badge(s.status, "amber")}</td></tr>`;
     }).join("");
@@ -1099,7 +1120,7 @@ tbody tr.warn-row:hover td { background: #fff6e6; }
       <div class="grid g2">
         <div class="card">${cardHead("销售 / 毛利 / 广告花费", "按日", `<a class="btn ghost" href="#/sales">看明细</a>`)}
           <div class="chart-wrap"><canvas id="cTrend"></canvas></div>
-          <div class="hint-row">鼠标移到图上可看当天明细</div></div>
+          <div class="hint-row">鼠标放到曲线上：按 产品编号 / 规格 看对应数量</div></div>
         <div class="card">${cardHead("待办与异常提醒", `${D.todos.filter(t => t.status !== "已处理").length} 条`)}<div class="todo">${todos}</div></div>
       </div>
       <div class="grid g2">
@@ -1520,7 +1541,7 @@ tbody tr.warn-row:hover td { background: #fff6e6; }
         <td>${badge(c.type === "SP" ? "商品推广" : c.type === "SB" ? "品牌推广" : "展示推广", c.type === "SP" ? "blue" : c.type === "SB" ? "green" : "amber")}</td>
         <td>${esc(c.store)}</td>
         <td>${c.site}</td>
-        <td class="mono">${esc(c.sku)}</td>
+        <td class="mono">${esc(c.sku)}<div class="muted">${esc(specOf(c.sku))}</div></td>
         <td class="num">${num(c.impressions)}</td>
         <td class="num">${num(c.clicks)}</td>
         <td class="num">${cCtr.toFixed(2)}%</td>
@@ -1629,10 +1650,11 @@ tbody tr.warn-row:hover td { background: #fff6e6; }
       entity = "site";
       note = "站点 = 销售国，可后台自定义（美国、加拿大、巴西、墨西哥、德国、英国…），币种用于本币录入折算。";
     } else if (tab === "skuProfit") {
-      cols = ["SKU", "产品名称", "售价(¥)", "采购成本", "头程", "仓储", "平台佣金", "配送费", "广告分摊", "单件毛利", "毛利率", "更新日期"];
+      cols = ["SKU", "产品名称", "规格", "售价(¥)", "采购成本", "头程", "仓储", "平台佣金", "配送费", "广告分摊", "单件毛利", "毛利率", "更新日期"];
       rows = D.skuProfit.map((r, i) => `<tr data-row>
         <td class="name">${esc(r.sku)}<div class="muted">${esc(r.site)} · ${esc(r.store)}</div></td>
         <td>${esc(r.name)}</td>
+        <td class="muted">${esc(r.spec || "—")}</td>
         <td class="num">${money2(r.price)}</td>
         <td class="num">${money2(r.cost)}</td>
         <td class="num">${money2(r.freight)}</td>
@@ -1774,6 +1796,7 @@ tbody tr.warn-row:hover td { background: #fff6e6; }
       fields: [
         { k: "sku", l: "SKU 编码", t: "text", req: 1 },
         { k: "name", l: "产品名称", t: "text", req: 1 },
+        { k: "spec", l: "规格（颜色 / 尺寸）", t: "text", ph: "如 深灰 / 60L" },
         { k: "site", l: "站点", t: "select", opts: siteOpts },
         { k: "price", l: "售价（¥）", t: "number", req: 1 },
         { k: "cost", l: "采购成本（¥）", t: "number" },
@@ -2044,13 +2067,57 @@ tbody tr.warn-row:hover td { background: #fff6e6; }
     for (let t = Date.parse(r.from + "T00:00:00Z"); t <= Date.parse(r.to + "T00:00:00Z"); t += DAY) {
       days.push(new Date(t).toISOString().slice(0, 10));
     }
-    const size = Math.max(1, Math.ceil(days.length / 9));
+    const size = days.length <= 31 ? 1 : Math.ceil(days.length / 12);
     const out = [];
     for (let i = 0; i < days.length; i += size) {
       const ds = days.slice(i, i + size);
       out.push({ label: ds.length > 1 ? md(ds[0]) + "~" + md(ds[ds.length - 1]) : md(ds[0]), from: ds[0], to: ds[ds.length - 1] });
     }
     return out;
+  }
+
+  const specOf = (sku) => {
+    const o = D.skus.find(x => x.sku === sku) || D.skuProfit.find(x => x.sku === sku) || D.stock.find(x => x.sku === sku);
+    return o && o.spec ? o.spec : "—";
+  };
+
+  // 曲线悬停：按 产品编号 / 规格 列出数量
+  function chartTip(context) {
+    const { chart, tooltip } = context;
+    const wrap = chart.canvas.parentNode;
+    let el = wrap.querySelector(".chart-tip");
+    if (!el) {
+      el = document.createElement("div");
+      el.className = "chart-tip";
+      wrap.appendChild(el);
+    }
+    if (!tooltip.opacity || !tooltip.dataPoints || !tooltip.dataPoints.length) { el.style.opacity = 0; return; }
+    const b = chart.$buckets && chart.$buckets[tooltip.dataPoints[0].dataIndex];
+    if (!b) { el.style.opacity = 0; return; }
+
+    if (el.dataset.k !== b.from) {
+      const list = salesRows().filter(x => x.date >= b.from && x.date <= b.to);
+      const amount = list.reduce((a, x) => a + x.amount, 0);
+      const qty = list.reduce((a, x) => a + x.qty, 0);
+      const profit = list.reduce((a, x) => a + x.profit, 0);
+      const map = {};
+      list.forEach(x => { map[x.sku] = map[x.sku] || { sku: x.sku, qty: 0, spec: x.spec || specOf(x.sku) }; map[x.sku].qty += x.qty; });
+      const rows = Object.values(map).sort((a, c) => c.qty - a.qty);
+      const shown = rows.slice(0, 5);
+      el.innerHTML = `
+        <div class="ct-head">${b.from === b.to ? b.from.slice(5) : b.from.slice(5) + " ~ " + b.to.slice(5)}</div>
+        <div class="ct-total"><span>销售额 <b>${money(amount)}</b></span><span>销量 <b>${num(qty)} 件</b></span><span>毛利 <b>${money(profit)}</b></span></div>
+        <div class="ct-title">产品编号 / 规格 — 数量</div>
+        ${shown.map(x => `<div class="ct-row"><span class="ct-sku">${esc(x.sku)}</span><span class="ct-spec">${esc(x.spec)}</span><b>${num(x.qty)} 件</b></div>`).join("") || `<div class="ct-row muted">当天没有销量</div>`}
+        ${rows.length > shown.length ? `<div class="ct-more">另有 ${rows.length - shown.length} 个 SKU，共 ${num(rows.slice(5).reduce((a, x) => a + x.qty, 0))} 件</div>` : ""}`;
+      el.dataset.k = b.from;
+    }
+    el.style.opacity = 1;
+    const cw = chart.width, tw = el.offsetWidth;
+    let left = tooltip.caretX + 16;
+    if (left + tw > cw) left = tooltip.caretX - tw - 16;
+    el.style.left = Math.max(4, left) + "px";
+    el.style.top = Math.max(4, Math.min(chart.height - el.offsetHeight - 8, tooltip.caretY - 12)) + "px";
   }
 
   function seriesBy(list, r, k) {
@@ -2078,10 +2145,12 @@ tbody tr.warn-row:hover td { background: #fff6e6; }
             ]
           },
           options: {
-            plugins: { legend, tooltip: { callbacks: { label: (c) => `${c.dataset.label}：${money(c.parsed.y)}` } } },
+            plugins: { legend, tooltip: { enabled: false, external: chartTip, mode: "index", intersect: false } },
             scales: { y: { ticks: { callback: v => "¥" + v / 1000 + "k" } } }
           }
         });
+        const ch = Chart.getChart(el);
+        if (ch) ch.$buckets = buckets(r);
       }
       const b = document.getElementById("cCash");
       if (b) addChart(b, {
@@ -2137,7 +2206,10 @@ tbody tr.warn-row:hover td { background: #fff6e6; }
             ]
           },
           options: {
-            plugins: { legend, tooltip: { callbacks: { label: (c) => c.dataset.label === "销量" ? `销量：${num(c.parsed.y)} 件` : `${c.dataset.label}：${money(c.parsed.y)}` } } },
+            plugins: { legend, tooltip: { callbacks: {
+              title: (items) => `${items[0].label} · ${specOf(items[0].label)}`,
+              label: (c) => c.dataset.label === "销量" ? `销量：${num(c.parsed.y)} 件` : `${c.dataset.label}：${money(c.parsed.y)}`
+            } } },
             scales: {
               y: { position: "left", ticks: { callback: v => "¥" + v / 1000 + "k" }, grid: { color: "#eef1f6" } },
               y1: { position: "right", grid: { display: false }, ticks: { callback: v => v + " 件" } }

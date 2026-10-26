@@ -526,3 +526,24 @@ tbody tr.warn-row:hover td { background: #fff6e6; }
 .table.wide { min-width: 1300px; }
 .table.wide th, .table.wide td { white-space: nowrap; }
 .table.wide td .muted { white-space: nowrap; }
+
+/* 曲线悬停：产品编号 / 规格 / 数量 */
+.chart-tip {
+  position: absolute; z-index: 20; min-width: 230px; max-width: 300px;
+  background: #fff; border: 1px solid #dbe3ee; border-radius: 10px;
+  box-shadow: 0 12px 30px rgba(15, 23, 42, .14); padding: 10px 12px;
+  font-size: 12px; color: var(--ink); pointer-events: none; opacity: 0;
+  transition: opacity .12s ease;
+}
+.chart-tip .ct-head { font-weight: 650; font-size: 12.5px; margin-bottom: 6px; }
+.chart-tip .ct-total {
+  display: flex; gap: 10px; flex-wrap: wrap; color: var(--muted);
+  font-size: 11.5px; padding-bottom: 7px; margin-bottom: 7px; border-bottom: 1px dashed var(--line);
+}
+.chart-tip .ct-total b { color: var(--ink); font-variant-numeric: tabular-nums; }
+.chart-tip .ct-title { font-size: 11px; color: #94a3b8; margin-bottom: 4px; }
+.chart-tip .ct-row { display: flex; gap: 8px; align-items: baseline; padding: 2px 0; }
+.chart-tip .ct-row .ct-sku { font-variant-numeric: tabular-nums; font-weight: 600; }
+.chart-tip .ct-row .ct-spec { color: var(--muted); flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.chart-tip .ct-row b { font-variant-numeric: tabular-nums; }
+.chart-tip .ct-more { margin-top: 5px; color: #94a3b8; font-size: 11px; }

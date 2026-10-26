@@ -146,7 +146,7 @@
     const stockRows = D.stock.slice(0, 4).map(s => {
       const perDay = s.sales30 / 30;
       const days = perDay > 0 ? Math.round(s.fba / perDay) : 0;
-      return `<tr data-row><td class="name">${esc(s.sku)}<div class="muted">${esc(s.name)}</div></td>
+      return `<tr data-row><td class="name">${esc(s.sku)}<div class="muted">${esc(s.name)} · ${esc(s.spec || specOf(s.sku))}</div></td>
       <td>${esc(s.store)}</td><td>${s.site}</td><td class="num">${num(s.fba)}</td><td class="num">${days} 天</td>
       <td>${s.status === "健康" ? badge("健康", "green") : s.status === "已断货" ? badge("已断货", "red") : badge(s.status, "amber")}</td></tr>`;
     }).join("");
@@ -164,7 +164,7 @@
       <div class="grid g2">
         <div class="card">${cardHead("销售 / 毛利 / 广告花费", "按日", `<a class="btn ghost" href="#/sales">看明细</a>`)}
           <div class="chart-wrap"><canvas id="cTrend"></canvas></div>
-          <div class="hint-row">鼠标移到图上可看当天明细</div></div>
+          <div class="hint-row">鼠标放到曲线上：按 产品编号 / 规格 看对应数量</div></div>
         <div class="card">${cardHead("待办与异常提醒", `${D.todos.filter(t => t.status !== "已处理").length} 条`)}<div class="todo">${todos}</div></div>
       </div>
       <div class="grid g2">
@@ -585,7 +585,7 @@
         <td>${badge(c.type === "SP" ? "商品推广" : c.type === "SB" ? "品牌推广" : "展示推广", c.type === "SP" ? "blue" : c.type === "SB" ? "green" : "amber")}</td>
         <td>${esc(c.store)}</td>
         <td>${c.site}</td>
-        <td class="mono">${esc(c.sku)}</td>
+        <td class="mono">${esc(c.sku)}<div class="muted">${esc(specOf(c.sku))}</div></td>
         <td class="num">${num(c.impressions)}</td>
         <td class="num">${num(c.clicks)}</td>
         <td class="num">${cCtr.toFixed(2)}%</td>
@@ -694,10 +694,11 @@
       entity = "site";
       note = "站点 = 销售国，可后台自定义（美国、加拿大、巴西、墨西哥、德国、英国…），币种用于本币录入折算。";
     } else if (tab === "skuProfit") {
-      cols = ["SKU", "产品名称", "售价(¥)", "采购成本", "头程", "仓储", "平台佣金", "配送费", "广告分摊", "单件毛利", "毛利率", "更新日期"];
+      cols = ["SKU", "产品名称", "规格", "售价(¥)", "采购成本", "头程", "仓储", "平台佣金", "配送费", "广告分摊", "单件毛利", "毛利率", "更新日期"];
       rows = D.skuProfit.map((r, i) => `<tr data-row>
         <td class="name">${esc(r.sku)}<div class="muted">${esc(r.site)} · ${esc(r.store)}</div></td>
         <td>${esc(r.name)}</td>
+        <td class="muted">${esc(r.spec || "—")}</td>
         <td class="num">${money2(r.price)}</td>
         <td class="num">${money2(r.cost)}</td>
         <td class="num">${money2(r.freight)}</td>
@@ -839,6 +840,7 @@
       fields: [
         { k: "sku", l: "SKU 编码", t: "text", req: 1 },
         { k: "name", l: "产品名称", t: "text", req: 1 },
+        { k: "spec", l: "规格（颜色 / 尺寸）", t: "text", ph: "如 深灰 / 60L" },
         { k: "site", l: "站点", t: "select", opts: siteOpts },
         { k: "price", l: "售价（¥）", t: "number", req: 1 },
         { k: "cost", l: "采购成本（¥）", t: "number" },
@@ -1109,13 +1111,57 @@
     for (let t = Date.parse(r.from + "T00:00:00Z"); t <= Date.parse(r.to + "T00:00:00Z"); t += DAY) {
       days.push(new Date(t).toISOString().slice(0, 10));
     }
-    const size = Math.max(1, Math.ceil(days.length / 9));
+    const size = days.length <= 31 ? 1 : Math.ceil(days.length / 12);
     const out = [];
     for (let i = 0; i < days.length; i += size) {
       const ds = days.slice(i, i + size);
       out.push({ label: ds.length > 1 ? md(ds[0]) + "~" + md(ds[ds.length - 1]) : md(ds[0]), from: ds[0], to: ds[ds.length - 1] });
     }
     return out;
+  }
+
+  const specOf = (sku) => {
+    const o = D.skus.find(x => x.sku === sku) || D.skuProfit.find(x => x.sku === sku) || D.stock.find(x => x.sku === sku);
+    return o && o.spec ? o.spec : "—";
+  };
+
+  // 曲线悬停：按 产品编号 / 规格 列出数量
+  function chartTip(context) {
+    const { chart, tooltip } = context;
+    const wrap = chart.canvas.parentNode;
+    let el = wrap.querySelector(".chart-tip");
+    if (!el) {
+      el = document.createElement("div");
+      el.className = "chart-tip";
+      wrap.appendChild(el);
+    }
+    if (!tooltip.opacity || !tooltip.dataPoints || !tooltip.dataPoints.length) { el.style.opacity = 0; return; }
+    const b = chart.$buckets && chart.$buckets[tooltip.dataPoints[0].dataIndex];
+    if (!b) { el.style.opacity = 0; return; }
+
+    if (el.dataset.k !== b.from) {
+      const list = salesRows().filter(x => x.date >= b.from && x.date <= b.to);
+      const amount = list.reduce((a, x) => a + x.amount, 0);
+      const qty = list.reduce((a, x) => a + x.qty, 0);
+      const profit = list.reduce((a, x) => a + x.profit, 0);
+      const map = {};
+      list.forEach(x => { map[x.sku] = map[x.sku] || { sku: x.sku, qty: 0, spec: x.spec || specOf(x.sku) }; map[x.sku].qty += x.qty; });
+      const rows = Object.values(map).sort((a, c) => c.qty - a.qty);
+      const shown = rows.slice(0, 5);
+      el.innerHTML = `
+        <div class="ct-head">${b.from === b.to ? b.from.slice(5) : b.from.slice(5) + " ~ " + b.to.slice(5)}</div>
+        <div class="ct-total"><span>销售额 <b>${money(amount)}</b></span><span>销量 <b>${num(qty)} 件</b></span><span>毛利 <b>${money(profit)}</b></span></div>
+        <div class="ct-title">产品编号 / 规格 — 数量</div>
+        ${shown.map(x => `<div class="ct-row"><span class="ct-sku">${esc(x.sku)}</span><span class="ct-spec">${esc(x.spec)}</span><b>${num(x.qty)} 件</b></div>`).join("") || `<div class="ct-row muted">当天没有销量</div>`}
+        ${rows.length > shown.length ? `<div class="ct-more">另有 ${rows.length - shown.length} 个 SKU，共 ${num(rows.slice(5).reduce((a, x) => a + x.qty, 0))} 件</div>` : ""}`;
+      el.dataset.k = b.from;
+    }
+    el.style.opacity = 1;
+    const cw = chart.width, tw = el.offsetWidth;
+    let left = tooltip.caretX + 16;
+    if (left + tw > cw) left = tooltip.caretX - tw - 16;
+    el.style.left = Math.max(4, left) + "px";
+    el.style.top = Math.max(4, Math.min(chart.height - el.offsetHeight - 8, tooltip.caretY - 12)) + "px";
   }
 
   function seriesBy(list, r, k) {
@@ -1143,10 +1189,12 @@
             ]
           },
           options: {
-            plugins: { legend, tooltip: { callbacks: { label: (c) => `${c.dataset.label}：${money(c.parsed.y)}` } } },
+            plugins: { legend, tooltip: { enabled: false, external: chartTip, mode: "index", intersect: false } },
             scales: { y: { ticks: { callback: v => "¥" + v / 1000 + "k" } } }
           }
         });
+        const ch = Chart.getChart(el);
+        if (ch) ch.$buckets = buckets(r);
       }
       const b = document.getElementById("cCash");
       if (b) addChart(b, {
@@ -1202,7 +1250,10 @@
             ]
           },
           options: {
-            plugins: { legend, tooltip: { callbacks: { label: (c) => c.dataset.label === "销量" ? `销量：${num(c.parsed.y)} 件` : `${c.dataset.label}：${money(c.parsed.y)}` } } },
+            plugins: { legend, tooltip: { callbacks: {
+              title: (items) => `${items[0].label} · ${specOf(items[0].label)}`,
+              label: (c) => c.dataset.label === "销量" ? `销量：${num(c.parsed.y)} 件` : `${c.dataset.label}：${money(c.parsed.y)}`
+            } } },
             scales: {
               y: { position: "left", ticks: { callback: v => "¥" + v / 1000 + "k" }, grid: { color: "#eef1f6" } },
               y1: { position: "right", grid: { display: false }, ticks: { callback: v => v + " 件" } }

@@ -20,12 +20,12 @@
 
   // 一条记录 = 店铺(公司) × 站点(销售国) × SKU 的唯一身份
   const skus = [
-    { sku: "SKU-1001", name: "折叠收纳箱 60L", store: "深圳市星野科技有限公司", site: "美国", asin: "B0B8X1Q2M3", price: 35.99, baseQty: 4, cost: 92, delivery: 38, freight: 6, storage: 2 },
-    { sku: "SKU-1002", name: "厨房沥水架", store: "深圳市星野科技有限公司", site: "美国", asin: "B0B7K4L9P1", price: 19.99, baseQty: 3, cost: 48, delivery: 26, freight: 3, storage: 1 },
-    { sku: "SKU-1003", name: "宠物自动喂食器", store: "星野贸易（香港）有限公司", site: "美国", asin: "B0C2M8T6R4", price: 89.99, baseQty: 1, cost: 235, delivery: 82, freight: 12, storage: 4 },
-    { sku: "SKU-1004", name: "车载吸尘器", store: "Nordwind GmbH", site: "德国", asin: "B0D5N3V7S2", price: 69.99, baseQty: 1, cost: 205, delivery: 75, freight: 14, storage: 4 },
-    { sku: "SKU-1005", name: "硅胶烘焙垫 3 件套", store: "星野贸易（香港）有限公司", site: "美国", asin: "B0B9P2D4W8", price: 12.99, baseQty: 12, cost: 26, delivery: 14, freight: 2, storage: 0.5 },
-    { sku: "SKU-1006", name: "露营折叠桌", store: "Nordwind GmbH", site: "德国", asin: "B0F1Q7H5K9", price: 45.99, baseQty: 2, cost: 128, delivery: 52, freight: 9, storage: 2 }
+    { sku: "SKU-1001", name: "折叠收纳箱 60L", spec: "深灰 / 60L", store: "深圳市星野科技有限公司", site: "美国", asin: "B0B8X1Q2M3", price: 35.99, baseQty: 4, cost: 92, delivery: 38, freight: 6, storage: 2 },
+    { sku: "SKU-1002", name: "厨房沥水架", spec: "白色 / 双层", store: "深圳市星野科技有限公司", site: "美国", asin: "B0B7K4L9P1", price: 19.99, baseQty: 3, cost: 48, delivery: 26, freight: 3, storage: 1 },
+    { sku: "SKU-1003", name: "宠物自动喂食器", spec: "白色 / 4L", store: "星野贸易（香港）有限公司", site: "美国", asin: "B0C2M8T6R4", price: 89.99, baseQty: 1, cost: 235, delivery: 82, freight: 12, storage: 4 },
+    { sku: "SKU-1004", name: "车载吸尘器", spec: "黑色 / 无线", store: "Nordwind GmbH", site: "德国", asin: "B0D5N3V7S2", price: 69.99, baseQty: 1, cost: 205, delivery: 75, freight: 14, storage: 4 },
+    { sku: "SKU-1005", name: "硅胶烘焙垫 3 件套", spec: "彩色 / 3 件套", store: "星野贸易（香港）有限公司", site: "美国", asin: "B0B9P2D4W8", price: 12.99, baseQty: 12, cost: 26, delivery: 14, freight: 2, storage: 0.5 },
+    { sku: "SKU-1006", name: "露营折叠桌", spec: "木纹 / 120cm", store: "Nordwind GmbH", site: "德国", asin: "B0F1Q7H5K9", price: 45.99, baseQty: 2, cost: 128, delivery: 52, freight: 9, storage: 2 }
   ];
 
   // ---------- 广告活动（SP 商品推广 / SB 品牌推广 / SD 展示推广） ----------
@@ -96,7 +96,7 @@
       const ad = adBySkuDate[s.sku + "|" + date] || 0;
       const profit = amount - refund - s.cost * qty - s.freight * qty - s.storage * qty - commission - s.delivery * qty - ad;
       sales.push({
-        date, store: s.store, site: s.site, sku: s.sku, name: s.name, asin: s.asin,
+        date, store: s.store, site: s.site, sku: s.sku, name: s.name, spec: s.spec, asin: s.asin,
         currency: s.site === "德国" ? "EUR" : "USD",
         qty, amountLocal, amount, refund, commission, ad, profit,
         margin: amount ? +(profit / amount * 100).toFixed(1) : 0
@@ -106,12 +106,12 @@
 
   // ---------- FBA 库存（不做海外仓） ----------
   const stock = [
-    { sku: "SKU-1001", name: "折叠收纳箱 60L", store: "深圳市星野科技有限公司", site: "美国", asin: "B0B8X1Q2M3", fba: 820, domestic: 600, inbound: 480, age90: 0, sales30: 512, eta: "2026-11-02", status: "正常" },
-    { sku: "SKU-1002", name: "厨房沥水架", store: "深圳市星野科技有限公司", site: "美国", asin: "B0B7K4L9P1", fba: 64, domestic: 0, inbound: 0, age90: 64, sales30: 196, eta: "—", status: "断货风险" },
-    { sku: "SKU-1003", name: "宠物自动喂食器", store: "星野贸易（香港）有限公司", site: "美国", asin: "B0C2M8T6R4", fba: 0, domestic: 300, inbound: 300, age90: 0, sales30: 96, eta: "2026-11-11", status: "已断货" },
-    { sku: "SKU-1004", name: "车载吸尘器", store: "Nordwind GmbH", site: "德国", asin: "B0D5N3V7S2", fba: 210, domestic: 0, inbound: 120, age90: 0, sales30: 61, eta: "2026-10-28", status: "偏紧" },
-    { sku: "SKU-1005", name: "硅胶烘焙垫 3 件套", store: "星野贸易（香港）有限公司", site: "美国", asin: "B0B9P2D4W8", fba: 1530, domestic: 0, inbound: 0, age90: 0, sales30: 530, eta: "—", status: "健康" },
-    { sku: "SKU-1006", name: "露营折叠桌", store: "Nordwind GmbH", site: "德国", asin: "B0F1Q7H5K9", fba: 340, domestic: 200, inbound: 0, age90: 12, sales30: 88, eta: "2026-11-06", status: "偏紧" }
+    { sku: "SKU-1001", name: "折叠收纳箱 60L", spec: "深灰 / 60L", store: "深圳市星野科技有限公司", site: "美国", asin: "B0B8X1Q2M3", fba: 820, domestic: 600, inbound: 480, age90: 0, sales30: 512, eta: "2026-11-02", status: "正常" },
+    { sku: "SKU-1002", name: "厨房沥水架", spec: "白色 / 双层", store: "深圳市星野科技有限公司", site: "美国", asin: "B0B7K4L9P1", fba: 64, domestic: 0, inbound: 0, age90: 64, sales30: 196, eta: "—", status: "断货风险" },
+    { sku: "SKU-1003", name: "宠物自动喂食器", spec: "白色 / 4L", store: "星野贸易（香港）有限公司", site: "美国", asin: "B0C2M8T6R4", fba: 0, domestic: 300, inbound: 300, age90: 0, sales30: 96, eta: "2026-11-11", status: "已断货" },
+    { sku: "SKU-1004", name: "车载吸尘器", spec: "黑色 / 无线", store: "Nordwind GmbH", site: "德国", asin: "B0D5N3V7S2", fba: 210, domestic: 0, inbound: 120, age90: 0, sales30: 61, eta: "2026-10-28", status: "偏紧" },
+    { sku: "SKU-1005", name: "硅胶烘焙垫 3 件套", spec: "彩色 / 3 件套", store: "星野贸易（香港）有限公司", site: "美国", asin: "B0B9P2D4W8", fba: 1530, domestic: 0, inbound: 0, age90: 0, sales30: 530, eta: "—", status: "健康" },
+    { sku: "SKU-1006", name: "露营折叠桌", spec: "木纹 / 120cm", store: "Nordwind GmbH", site: "德国", asin: "B0F1Q7H5K9", fba: 340, domestic: 200, inbound: 0, age90: 12, sales30: 88, eta: "2026-11-06", status: "偏紧" }
   ];
 
   // ---------- SKU 利润表（成本项每天可能变，录入时留更新日期） ----------
@@ -122,7 +122,7 @@
     const ad = +(price * 0.10).toFixed(2);
     const profit = +(price - s.cost - s.freight - s.storage - commission - s.delivery - ad).toFixed(2);
     return {
-      sku: s.sku, name: s.name, store: s.store, site: s.site,
+      sku: s.sku, name: s.name, spec: s.spec, store: s.store, site: s.site,
       price, cost: s.cost, freight: s.freight, storage: s.storage,
       commission, delivery: s.delivery, ad, profit,
       margin: +(profit / price * 100).toFixed(1),
