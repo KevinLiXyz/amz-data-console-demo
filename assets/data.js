@@ -94,11 +94,12 @@
       const refund = amount * (0.025 + rnd() * 0.03);
       const commission = amount * 0.15;
       const ad = adBySkuDate[s.sku + "|" + date] || 0;
-      const profit = amount - refund - s.cost * qty - s.freight * qty - s.storage * qty - commission - s.delivery * qty - ad;
+      const cost = s.cost * qty, freight = s.freight * qty, storage = s.storage * qty, delivery = s.delivery * qty;
+      const profit = amount - refund - cost - freight - storage - commission - delivery - ad;
       sales.push({
         date, store: s.store, site: s.site, sku: s.sku, name: s.name, spec: s.spec, asin: s.asin,
         currency: s.site === "德国" ? "EUR" : "USD",
-        qty, amountLocal, amount, refund, commission, ad, profit,
+        qty, amountLocal, amount, refund, commission, delivery, cost, freight, storage, ad, profit,
         margin: amount ? +(profit / amount * 100).toFixed(1) : 0
       });
     });
@@ -120,10 +121,11 @@
     const price = +(s.price * cny).toFixed(2);
     const commission = +(price * 0.15).toFixed(2);
     const ad = +(price * 0.10).toFixed(2);
-    const profit = +(price - s.cost - s.freight - s.storage - commission - s.delivery - ad).toFixed(2);
+    const refund = +(price * 0.04).toFixed(2);
+    const profit = +(price - refund - s.cost - s.freight - s.storage - commission - s.delivery - ad).toFixed(2);
     return {
       sku: s.sku, name: s.name, spec: s.spec, store: s.store, site: s.site,
-      price, cost: s.cost, freight: s.freight, storage: s.storage,
+      price, refund, cost: s.cost, freight: s.freight, storage: s.storage,
       commission, delivery: s.delivery, ad, profit,
       margin: +(profit / price * 100).toFixed(1),
       updated: s.sku === "SKU-1002" ? "2026-10-24" : "2026-10-25"

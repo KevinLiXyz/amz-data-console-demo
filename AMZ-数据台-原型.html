@@ -556,6 +556,9 @@ tbody tr.warn-row:hover td { background: #fff6e6; }
 .chart-tip .ct-row b { font-variant-numeric: tabular-nums; }
 .chart-tip .ct-more { margin-top: 5px; color: #94a3b8; font-size: 11px; }
 
+.pick-count { font-size: 11.5px; color: var(--muted); }
+.table input[type="checkbox"] { accent-color: var(--brand); width: 14px; height: 14px; }
+
 </style>
 <script>
 /**
@@ -757,11 +760,12 @@ tbody tr.warn-row:hover td { background: #fff6e6; }
       const refund = amount * (0.025 + rnd() * 0.03);
       const commission = amount * 0.15;
       const ad = adBySkuDate[s.sku + "|" + date] || 0;
-      const profit = amount - refund - s.cost * qty - s.freight * qty - s.storage * qty - commission - s.delivery * qty - ad;
+      const cost = s.cost * qty, freight = s.freight * qty, storage = s.storage * qty, delivery = s.delivery * qty;
+      const profit = amount - refund - cost - freight - storage - commission - delivery - ad;
       sales.push({
         date, store: s.store, site: s.site, sku: s.sku, name: s.name, spec: s.spec, asin: s.asin,
         currency: s.site === "德国" ? "EUR" : "USD",
-        qty, amountLocal, amount, refund, commission, ad, profit,
+        qty, amountLocal, amount, refund, commission, delivery, cost, freight, storage, ad, profit,
         margin: amount ? +(profit / amount * 100).toFixed(1) : 0
       });
     });
@@ -783,10 +787,11 @@ tbody tr.warn-row:hover td { background: #fff6e6; }
     const price = +(s.price * cny).toFixed(2);
     const commission = +(price * 0.15).toFixed(2);
     const ad = +(price * 0.10).toFixed(2);
-    const profit = +(price - s.cost - s.freight - s.storage - commission - s.delivery - ad).toFixed(2);
+    const refund = +(price * 0.04).toFixed(2);
+    const profit = +(price - refund - s.cost - s.freight - s.storage - commission - s.delivery - ad).toFixed(2);
     return {
       sku: s.sku, name: s.name, spec: s.spec, store: s.store, site: s.site,
-      price, cost: s.cost, freight: s.freight, storage: s.storage,
+      price, refund, cost: s.cost, freight: s.freight, storage: s.storage,
       commission, delivery: s.delivery, ad, profit,
       margin: +(profit / price * 100).toFixed(1),
       updated: s.sku === "SKU-1002" ? "2026-10-24" : "2026-10-25"
@@ -1030,9 +1035,21 @@ tbody tr.warn-row:hover td { background: #fff6e6; }
   }
   function sum(list, k) { return list.reduce((a, x) => a + (+x[k] || 0), 0); }
 
+  // 广告数据是唯一来源：销售明细的广告费与毛利从这里取数
+  let AD_INDEX = null;
+  const adIndex = () => {
+    if (!AD_INDEX) {
+      AD_INDEX = new Map();
+      D.ads.forEach(a => { const k = a.sku + "|" + a.date; AD_INDEX.set(k, (AD_INDEX.get(k) || 0) + a.spend); });
+    }
+    return AD_INDEX;
+  };
+  const adFor = (sku, date) => adIndex().get(sku + "|" + date) || 0;
+  const profitOf = (x) => x.amount - x.refund - x.cost - x.freight - x.storage - x.commission - x.delivery - adFor(x.sku, x.date);
+
   function stats(r = range()) {
     const s = salesRows(r), a = adRows(r);
-    const sales = sum(s, "amount"), refund = sum(s, "refund"), profit = sum(s, "profit"), qty = sum(s, "qty"), ad = sum(a, "spend");
+    const sales = sum(s, "amount"), refund = sum(s, "refund"), profit = s.reduce((t, x) => t + profitOf(x), 0), qty = sum(s, "qty"), ad = sum(a, "spend");
     return { sales, refund, profit, qty, ad, margin: sales ? profit / sales * 100 : 0 };
   }
   const deltaOf = (cur, prev) => (prev ? (cur - prev) / Math.abs(prev) * 100 : 0);
@@ -1436,7 +1453,9 @@ tbody tr.warn-row:hover td { background: #fff6e6; }
             </div>
           </details>
           <button class="btn" data-act="toast" data-msg="已下载导入模板（演示）">下载模板</button>
-          <button class="btn primary" data-act="toast" data-msg="新增库存数据：日期 / SKU / 店铺 / 站点 / 可售 / 在途（演示）">＋ 新增库存数据</button>`)}
+          <button class="btn" data-act="toast" data-msg="表格导入：选择 FBA 库存 Excel 后进入校验（演示）">表格导入</button>
+          <button class="btn primary" data-act="toast" data-msg="新增库存数据：日期 / SKU / 店铺 / 站点 / 可售 / 在途（演示）">＋ 新增库存数据</button>
+          <button class="btn" data-act="toast" data-msg="已按建议补货量生成采购需求（演示）">＋ 发起采购需求</button>`)}
         <table class="table"><thead><tr><th>SKU / ASIN</th><th>品名 / 店铺</th><th>站点</th><th>库存水位</th><th class="num">国内运输中</th><th class="num">FBA 在途</th><th class="num">30 天销量</th><th class="num">可售天数</th><th class="num">建议补货</th>${showAge ? `<th class="num">库龄 &gt; 90 天</th>` : ""}${showEta ? `<th class="num">FBA 最早入仓</th>` : ""}<th>链路状态</th><th class="num">操作</th></tr></thead>
         <tbody>${rows || emptyRow(headCols, "当前筛选下没有数据")}</tbody></table>
         ${pager("goods", list.length)}
@@ -1469,9 +1488,9 @@ tbody tr.warn-row:hover td { background: #fff6e6; }
         <td class="num">${s.amountLocal.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
         <td class="num">${money(s.amount)}</td>
         <td class="num">${money(s.refund)}</td>
-        <td class="num">${money(s.ad)}</td>
-        <td class="num"><b>${money(s.profit)}</b></td>
-        <td class="num">${badge(s.margin.toFixed(1) + "%", s.margin >= 20 ? "green" : s.margin >= 12 ? "amber" : "red")}</td>
+        <td class="num">${money(adFor(s.sku, s.date))}</td>
+        <td class="num"><b>${money(profitOf(s))}</b></td>
+        <td class="num">${badge((profitOf(s) / (s.amount || 1) * 100).toFixed(1) + "%", (profitOf(s) / (s.amount || 1) * 100) >= 20 ? "green" : (profitOf(s) / (s.amount || 1) * 100) >= 12 ? "amber" : "red")}</td>
         <td class="num">${actions("sales", D.sales.indexOf(s))}</td>
       </tr>`;
     }).join("");
@@ -1537,6 +1556,7 @@ tbody tr.warn-row:hover td { background: #fff6e6; }
       const cCtr = c.impressions ? c.clicks / c.impressions * 100 : 0;
       const cCpc = c.clicks ? c.spend / c.clicks : 0;
       return `<tr data-row>
+        <td class="num"><input type="checkbox" data-ad-pick /></td>
         <td class="name">${esc(c.campaign)}<div class="muted">${c.type}</div></td>
         <td>${badge(c.type === "SP" ? "商品推广" : c.type === "SB" ? "品牌推广" : "展示推广", c.type === "SP" ? "blue" : c.type === "SB" ? "green" : "amber")}</td>
         <td>${esc(c.store)}</td>
@@ -1583,9 +1603,9 @@ tbody tr.warn-row:hover td { background: #fff6e6; }
       <div class="card">
         ${cardHead("活动列表", `${camps.length} 个活动 · 按 店铺 × 站点 × SKU 归集`, `<button class="btn" data-act="toast" data-msg="已下载广告模板（演示）">下载模板</button><button class="btn primary" data-act="edit" data-entity="ads">＋ 新增广告数据</button>`)}
         <div class="toolbar"><div class="tabs">${tabs.map(([k, n]) => `<button class="tab ${state.adType === k ? "active" : ""}" data-act="ad-type" data-type="${k}">${n}</button>`).join("")}</div>
-          <div class="right">${searchBox("搜索活动 / SKU")}</div></div>
-        <table class="table wide"><thead><tr><th>活动</th><th>类型</th><th>店铺（公司）</th><th>站点</th><th>SKU</th><th class="num">曝光</th><th class="num">点击</th><th class="num">CTR</th><th class="num">CPC</th><th class="num">花费</th><th class="num">广告销售额</th><th class="num">ACOS</th><th class="num">订单</th></tr></thead>
-        <tbody>${rows || emptyRow(13, "当前筛选下没有广告数据")}</tbody></table>
+          <div class="right">${searchBox("搜索活动 / SKU")}<span class="pick-count" id="adPick">已选 0</span><button class="btn sm" data-act="ad-batch" data-do="暂停">批量暂停</button><button class="btn sm" data-act="ad-batch" data-do="调价">批量调价</button></div></div>
+        <table class="table wide"><thead><tr><th class="num"><input type="checkbox" data-ad-all /></th><th>活动</th><th>类型</th><th>店铺（公司）</th><th>站点</th><th>SKU</th><th class="num">曝光</th><th class="num">点击</th><th class="num">CTR</th><th class="num">CPC</th><th class="num">花费</th><th class="num">广告销售额</th><th class="num">ACOS</th><th class="num">订单</th></tr></thead>
+        <tbody>${rows || emptyRow(14, "当前筛选下没有广告数据")}</tbody></table>
         ${pager("ads", camps.length)}
         <div class="hr"></div>
         <div class="note">广告数据每天按「日期 × 店铺 × 站点 × SKU × 广告类型」录入或导入，汇总后回写销售页的广告花费与毛利，也进首页与待办（ACOS 超阈值）。</div>
@@ -1650,12 +1670,13 @@ tbody tr.warn-row:hover td { background: #fff6e6; }
       entity = "site";
       note = "站点 = 销售国，可后台自定义（美国、加拿大、巴西、墨西哥、德国、英国…），币种用于本币录入折算。";
     } else if (tab === "skuProfit") {
-      cols = ["SKU", "产品名称", "规格", "售价(¥)", "采购成本", "头程", "仓储", "平台佣金", "配送费", "广告分摊", "单件毛利", "毛利率", "更新日期"];
+      cols = ["SKU", "产品名称", "规格", "售价(¥)", "退款", "采购成本", "头程", "仓储", "平台佣金", "配送费", "广告分摊", "单件毛利", "毛利率", "更新日期"];
       rows = D.skuProfit.map((r, i) => `<tr data-row>
         <td class="name">${esc(r.sku)}<div class="muted">${esc(r.site)} · ${esc(r.store)}</div></td>
         <td>${esc(r.name)}</td>
         <td class="muted">${esc(r.spec || "—")}</td>
         <td class="num">${money2(r.price)}</td>
+        <td class="num">${money2(r.refund || 0)}</td>
         <td class="num">${money2(r.cost)}</td>
         <td class="num">${money2(r.freight)}</td>
         <td class="num">${money2(r.storage)}</td>
@@ -1667,7 +1688,7 @@ tbody tr.warn-row:hover td { background: #fff6e6; }
         <td class="num muted">${r.updated}</td>
         <td class="num">${actions("skuProfit", i)}</td></tr>`).join("");
       entity = "skuProfit";
-      note = "单件毛利 = 售价 − 采购成本 − 头程 − 仓储 − 平台佣金 − 平台配送费 − 广告分摊。采购成本、头程、仓储、佣金、配送费每天可能波动，改动后更新日期留痕。";
+      note = "单件毛利 = 售价 − 退款 − 采购成本 − 头程 − 仓储 − 平台佣金 − 平台配送费 − 广告分摊。采购成本、头程、仓储、佣金、配送费每天可能波动，改动后更新日期留痕。";
     } else {
       cols = ["供应商", "品类", "联系人", "评级", "状态"];
       rows = D.suppliers.map((r, i) => `<tr data-row>
@@ -1799,6 +1820,7 @@ tbody tr.warn-row:hover td { background: #fff6e6; }
         { k: "spec", l: "规格（颜色 / 尺寸）", t: "text", ph: "如 深灰 / 60L" },
         { k: "site", l: "站点", t: "select", opts: siteOpts },
         { k: "price", l: "售价（¥）", t: "number", req: 1 },
+        { k: "refund", l: "退款（¥/件）", t: "number" },
         { k: "cost", l: "采购成本（¥）", t: "number" },
         { k: "freight", l: "头程（¥/件）", t: "number" },
         { k: "storage", l: "仓储（¥/件）", t: "number" },
@@ -1949,7 +1971,8 @@ tbody tr.warn-row:hover td { background: #fff6e6; }
       const price = +data.price || 0;
       data.commission = +(price * 0.15).toFixed(2);
       data.ad = data.ad || +(price * 0.10).toFixed(2);
-      data.profit = +(price - (+data.cost || 0) - (+data.freight || 0) - (+data.storage || 0) - data.commission - (+data.delivery || 0) - data.ad).toFixed(2);
+      data.refund = data.refund || +(price * 0.04).toFixed(2);
+      data.profit = +(price - data.refund - (+data.cost || 0) - (+data.freight || 0) - (+data.storage || 0) - data.commission - (+data.delivery || 0) - data.ad).toFixed(2);
       data.margin = price ? +(data.profit / price * 100).toFixed(1) : 0;
       data.updated = ANCHOR;
       const base = D.skuProfit.find(x => x.sku === data.sku) || D.skus.find(x => x.sku === data.sku);
@@ -1971,6 +1994,7 @@ tbody tr.warn-row:hover td { background: #fff6e6; }
       data.margin = data.amount ? +(data.profit / data.amount * 100).toFixed(1) : 0;
     }
     if (entity === "ads") {
+      AD_INDEX = null;
       data.spend = +data.spend || 0;
       data.sales = +data.sales || 0;
       data.impressions = +data.impressions || 0;
@@ -2001,6 +2025,12 @@ tbody tr.warn-row:hover td { background: #fff6e6; }
   }
 
   /* ---------------- toast & tooltip ---------------- */
+  function syncPick() {
+    const n = document.querySelectorAll("[data-ad-pick]:checked").length;
+    const el = document.getElementById("adPick");
+    if (el) el.textContent = `已选 ${n}`;
+  }
+
   let toastTimer = null;
   function toast(msg) {
     let el = document.getElementById("toast");
@@ -2279,7 +2309,10 @@ tbody tr.warn-row:hover td { background: #fff6e6; }
     const r = range();
     const days = Math.round((Date.parse(r.to + "T00:00:00Z") - Date.parse(r.from + "T00:00:00Z")) / DAY) + 1;
     const note = document.getElementById("rangeNote");
-    if (note) note.textContent = `${r.from} ~ ${r.to} · ${days} 天`;
+    const SNAPSHOT = ["purchase", "goods", "product", "todo", "master", "import", "account"];
+    if (note) note.textContent = `${r.from} ~ ${r.to} · ${days} 天` + (SNAPSHOT.includes(state.route) ? " · 时点快照" : "");
+    const nb = document.querySelector(".nav-badge");
+    if (nb) nb.textContent = D.todos.filter(t => t.status !== "已处理").length;
     document.querySelectorAll(".nav-item").forEach(a => a.classList.toggle("active", a.dataset.route === state.route));
     window.scrollTo({ top: 0 });
     draw();
@@ -2312,6 +2345,12 @@ tbody tr.warn-row:hover td { background: #fff6e6; }
     if (e.target.id === "fTo") { state.to = e.target.value; state.period = "custom"; document.getElementById("fPeriod").value = "custom"; render(); }
     if (e.target.id === "fStore") { state.store = e.target.value; state.page = { sales: 1, goods: 1, ads: 1 }; render(); }
     if (e.target.id === "fSite") { state.site = e.target.value; state.page = { sales: 1, goods: 1, ads: 1 }; render(); }
+    if (e.target.matches("[data-ad-all]")) {
+      document.querySelectorAll("[data-ad-pick]").forEach(cb => { cb.checked = e.target.checked; });
+      syncPick();
+      return;
+    }
+    if (e.target.matches("[data-ad-pick]")) { syncPick(); return; }
     if (e.target.matches("[data-col]")) {
       state.cols[e.target.dataset.col] = e.target.checked;
       render();
@@ -2378,6 +2417,12 @@ tbody tr.warn-row:hover td { background: #fff6e6; }
       }
       if (act === "cmp-dim") { state.compareDim = el.dataset.dim; render(); return; }
       if (act === "ad-type") { state.adType = el.dataset.type; state.page.ads = 1; render(); return; }
+      if (act === "ad-batch") {
+        const n = document.querySelectorAll("[data-ad-pick]:checked").length;
+        if (!n) { toast("先勾选活动"); return; }
+        toast(`已${el.dataset.do} ${n} 个活动（演示）`);
+        return;
+      }
       if (act === "proj-filter") { state.projStage = el.dataset.stage; render(); return; }
       if (act === "edit") { openForm(el.dataset.entity, el.dataset.key === undefined ? null : Number(el.dataset.key)); return; }
       if (act === "del") {
